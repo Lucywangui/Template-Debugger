@@ -1,1 +1,1 @@
-export { kiswahiliTemplates as fasihiKiswahiliTemplates } from "./questionTemplates";
+export { fasihiYaKiswahiliTemplates } from "./questionTemplates";

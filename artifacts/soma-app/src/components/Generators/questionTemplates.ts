@@ -203,46 +203,21 @@ const technologySeeds: TemplateSeed[] = [
   ["Innovation", "Problem solving", "Innovation means:", "creating a useful new idea", "avoiding all ideas", "copying mistakes", "destroying tools"],
 ];
 
-const languageFallbackSeeds: TemplateSeed[] = [
-  ["Communication", "Meaning", "Good communication should be:", "clear and respectful", "confusing", "harmful", "impossible"],
-  ["Reading", "Purpose", "Reading helps us to:", "understand information", "forget words", "avoid learning", "damage books"],
-  ["Writing", "Planning", "Before writing, it is useful to:", "plan ideas", "ignore the topic", "remove the title", "avoid checking"],
-  ["Vocabulary", "Meaning", "A dictionary helps us find:", "word meanings", "weather only", "soil types only", "prices only"],
-  ["Grammar", "Sentences", "A complete sentence expresses:", "a complete thought", "a single letter", "only a sound", "no meaning"],
-  ["Listening", "Attention", "Listening carefully helps us to:", "understand a message", "miss instructions", "interrupt others", "make noise"],
-  ["Speaking", "Clarity", "A speaker should use:", "clear words", "only whispers", "random sounds", "insults"],
-  ["Literature", "Stories", "A story usually has:", "events and characters", "only numbers", "no ideas", "only punctuation"],
-  ["Writing", "Editing", "Editing means:", "checking and improving writing", "throwing away all ideas", "stopping before writing", "changing every word randomly"],
-  ["Communication", "Listening", "A respectful listener:", "waits for the speaker to finish", "shouts over people", "laughs at every answer", "leaves immediately"],
-  ["Grammar", "Words", "Words are combined to form:", "sentences", "rainbows only", "stones", "mountains"],
-  ["Reading", "Inference", "An inference is:", "an idea worked out from clues", "a book cover", "a punctuation mark", "a title only"],
-  ["Writing", "Purpose", "A letter is written to:", "communicate with someone", "measure a field", "cook food", "draw a map"],
-  ["Oral skills", "Pronunciation", "Pronunciation is the way a word is:", "spoken", "painted", "measured", "folded"],
-  ["Language", "Practice", "Regular practice improves:", "language skills", "confusion", "carelessness", "silence"],
-];
-
 export const mathTemplates = makeRules("Mathematics", mathematicsSeeds);
 export const englishTemplates = makeRules("English", englishSeeds);
 export const kiswahiliTemplates = makeRules("Kiswahili", kiswahiliSeeds);
-export const scienceTemplates = makeRules("Science and Technology", scienceSeeds);
 export const agricultureTemplates = makeRules("Agriculture", agricultureSeeds);
 export const homeScienceTemplates = makeRules("Home Science", homeScienceSeeds);
 export const socialStudiesTemplates = makeRules("Social Studies", socialStudiesSeeds);
 export const artsTemplates = makeRules("Creative Arts", artsSeeds);
-export const religionTemplates = makeRules("Religious Education", religionSeeds);
 export const technologyTemplates = makeRules("Computer Science", technologySeeds);
-export const languageTemplates = makeRules("Language", languageFallbackSeeds);
 
 export const biologyTemplates = makeRules("Biology", scienceSeeds);
 export const chemistryTemplates = makeRules("Chemistry", scienceSeeds);
 export const integratedScienceTemplates = makeRules("Integrated Science", scienceSeeds);
 export const physicsTemplates = makeRules("Physics", scienceSeeds);
 export const environmentalActivitiesTemplates = makeRules("Environmental Activities", scienceSeeds);
-export const healthEducationTemplates = makeRules("Health Education", homeScienceSeeds);
 export const hygieneAndNutritionTemplates = makeRules("Hygiene & Nutrition", homeScienceSeeds);
-export const agricultureAndNutritionTemplates = makeRules("Agriculture and Nutrition", agricultureSeeds);
-export const creativeActivitiesTemplates = makeRules("Creative Activities", artsSeeds);
-export const creativeArtsAndSportsTemplates = makeRules("Creative Arts and Sports", artsSeeds);
 export const creTemplates = makeRules("CRE", religionSeeds);
 export const fasihiYaKiswahiliTemplates = makeRules("Fasihi ya Kiswahili", kiswahiliSeeds);
 export const historyAndCitizenshipTemplates = makeRules("History & Citizenship", socialStudiesSeeds);
@@ -251,6 +226,23 @@ export const businessStudiesTemplates = makeRules("Business Studies", socialStud
 export const computerScienceTemplates = makeRules("Computer Science", technologySeeds);
 export const literatureTemplates = makeRules("Literature", englishSeeds);
 export const preTechnicalTemplates = makeRules("Pre-Technical Studies", technologySeeds);
+
+export const TEMPLATE_SUBJECTS_BY_GRADE = {
+  lower: [
+    "CRE", "Creative Arts", "English", "Environmental Activities",
+    "Hygiene & Nutrition", "Kiswahili", "Mathematics",
+  ],
+  upper: [
+    "Agriculture", "Creative Arts", "English", "Environmental Activities",
+    "Home Science", "Kiswahili", "Mathematics", "Social Studies",
+  ],
+  junior: [
+    "Agriculture", "Biology", "Business Studies", "Chemistry", "Computer Science",
+    "Creative Arts", "English", "Fasihi ya Kiswahili", "Geography",
+    "History & Citizenship", "Home Science", "Integrated Science", "Kiswahili",
+    "Literature", "Mathematics", "Physics", "Pre-Technical Studies", "Social Studies",
+  ],
+} as const;
 
 export const TEMPLATE_RULES_BY_SUBJECT: Record<string, TemplateRule[]> = {
   Mathematics: mathTemplates,
@@ -270,7 +262,6 @@ export const TEMPLATE_RULES_BY_SUBJECT: Record<string, TemplateRule[]> = {
   CRE: creTemplates,
   "Fasihi ya Kiswahili": fasihiYaKiswahiliTemplates,
   "History & Citizenship": historyAndCitizenshipTemplates,
-  History: makeRules("History", socialStudiesSeeds),
   Geography: geographyTemplates,
   "Business Studies": businessStudiesTemplates,
   Literature: literatureTemplates,
@@ -278,5 +269,22 @@ export const TEMPLATE_RULES_BY_SUBJECT: Record<string, TemplateRule[]> = {
 };
 
 export function getTemplateRules(subject: string): TemplateRule[] {
-  return TEMPLATE_RULES_BY_SUBJECT[subject] ?? languageTemplates;
+  return TEMPLATE_RULES_BY_SUBJECT[subject] ?? [];
+}
+
+export function getTemplateRulesForGrade(subject: string, gradeKey: string): TemplateRule[] {
+  const gradeSubjects =
+    ["cbc-1", "cbc-2", "cbc-3"].includes(gradeKey)
+      ? TEMPLATE_SUBJECTS_BY_GRADE.lower
+      : ["cbc-4", "cbc-5", "cbc-6"].includes(gradeKey)
+        ? TEMPLATE_SUBJECTS_BY_GRADE.upper
+        : ["cbc-7", "cbc-8", "cbc-9"].includes(gradeKey)
+          ? TEMPLATE_SUBJECTS_BY_GRADE.junior
+          : null;
+
+  if (gradeSubjects && !gradeSubjects.some((allowedSubject) => allowedSubject === subject)) {
+    return [];
+  }
+
+  return getTemplateRules(subject);
 }

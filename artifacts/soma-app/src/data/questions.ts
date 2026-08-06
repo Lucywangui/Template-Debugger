@@ -1,5 +1,5 @@
 import { Material } from "./materials";
-import { getTemplateRules } from "@/components/Generators/questionTemplates";
+import { getTemplateRulesForGrade } from "@/components/Generators/questionTemplates";
 
 export interface Question {
   text: string;
@@ -1703,7 +1703,7 @@ function getBankForMaterial(material: Material): Question[] {
 // Main exported getter — 100% offline, instant, grade-stratified
 // ═══════════════════════════════════════════════════════════════════════════════
 export function getQuestionsForMaterial(material: Material, count: number): Question[] {
-  const rules = getTemplateRules(material.subject);
+  const rules = getTemplateRulesForGrade(material.subject, material.gradeKey);
   const requestedCount = Math.max(0, Math.floor(count));
   if (requestedCount === 0 || rules.length === 0) return [];
 

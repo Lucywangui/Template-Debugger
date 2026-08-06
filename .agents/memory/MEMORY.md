@@ -1,1 +1,2 @@
 - [Generator template integrity](generator-template-integrity.md) — template files are a critical parse boundary; validate their shared type and syntax before debugging UI behavior.
+- [Grade subject registry](grade-subject-registry.md) — generator subjects must exactly match the approved Lower, Upper, and Junior CBC lists; unknown subjects must not use a fallback.
