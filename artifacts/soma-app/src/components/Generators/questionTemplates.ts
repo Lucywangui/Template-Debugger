@@ -239,12 +239,13 @@ export const integratedScienceTemplates = makeRules("Integrated Science", scienc
 export const physicsTemplates = makeRules("Physics", scienceSeeds);
 export const environmentalActivitiesTemplates = makeRules("Environmental Activities", scienceSeeds);
 export const healthEducationTemplates = makeRules("Health Education", homeScienceSeeds);
-export const hygieneAndNutritionTemplates = makeRules("Hygiene and Nutrition", homeScienceSeeds);
+export const hygieneAndNutritionTemplates = makeRules("Hygiene & Nutrition", homeScienceSeeds);
 export const agricultureAndNutritionTemplates = makeRules("Agriculture and Nutrition", agricultureSeeds);
 export const creativeActivitiesTemplates = makeRules("Creative Activities", artsSeeds);
 export const creativeArtsAndSportsTemplates = makeRules("Creative Arts and Sports", artsSeeds);
-export const creTemplates = makeRules("Christian Religious Education", religionSeeds);
-export const historyAndCitizenshipTemplates = makeRules("History", socialStudiesSeeds);
+export const creTemplates = makeRules("CRE", religionSeeds);
+export const fasihiYaKiswahiliTemplates = makeRules("Fasihi ya Kiswahili", kiswahiliSeeds);
+export const historyAndCitizenshipTemplates = makeRules("History & Citizenship", socialStudiesSeeds);
 export const geographyTemplates = makeRules("Geography", socialStudiesSeeds);
 export const businessStudiesTemplates = makeRules("Business Studies", socialStudiesSeeds);
 export const computerScienceTemplates = makeRules("Computer Science", technologySeeds);
@@ -255,25 +256,21 @@ export const TEMPLATE_RULES_BY_SUBJECT: Record<string, TemplateRule[]> = {
   Mathematics: mathTemplates,
   English: englishTemplates,
   Kiswahili: kiswahiliTemplates,
-  "Science and Technology": scienceTemplates,
   Agriculture: agricultureTemplates,
   "Home Science": homeScienceTemplates,
   "Social Studies": socialStudiesTemplates,
   "Creative Arts": artsTemplates,
-  "Religious Education": religionTemplates,
   "Computer Science": technologyTemplates,
   Biology: biologyTemplates,
   Chemistry: chemistryTemplates,
   "Integrated Science": integratedScienceTemplates,
   Physics: physicsTemplates,
   "Environmental Activities": environmentalActivitiesTemplates,
-  "Health Education": healthEducationTemplates,
-  "Hygiene and Nutrition": hygieneAndNutritionTemplates,
-  "Agriculture and Nutrition": agricultureAndNutritionTemplates,
-  "Creative Activities": creativeActivitiesTemplates,
-  "Creative Arts and Sports": creativeArtsAndSportsTemplates,
-  "Christian Religious Education": creTemplates,
-  History: historyAndCitizenshipTemplates,
+  "Hygiene & Nutrition": hygieneAndNutritionTemplates,
+  CRE: creTemplates,
+  "Fasihi ya Kiswahili": fasihiYaKiswahiliTemplates,
+  "History & Citizenship": historyAndCitizenshipTemplates,
+  History: makeRules("History", socialStudiesSeeds),
   Geography: geographyTemplates,
   "Business Studies": businessStudiesTemplates,
   Literature: literatureTemplates,

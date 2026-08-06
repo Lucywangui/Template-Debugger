@@ -21,10 +21,30 @@ export interface Material {
 // ─── Topic definitions per curriculum level ────────────────────────────────────
 
 const TOPICS_LOWER: Record<string, string[]> = {
+  "CRE": [
+    "Creation & Thanksgiving", "Prayer & Worship", "Family & Love",
+    "Sharing & Caring", "Honesty & Truth", "Forgiveness & Peace",
+    "Values & Virtues", "Celebrations & Festivals",
+  ],
+  "Creative Arts": [
+    "Drawing & Painting", "Paper Craft", "Clay Modelling",
+    "Music & Singing", "Drama & Role Play", "Dance & Movement",
+    "Weaving & Patterns", "Printing Techniques",
+  ],
   "English": [
     "Reading & Phonics", "Spelling & Dictation", "Nouns & Verbs",
     "Vocabulary Building", "Listening & Speaking", "Reading Comprehension",
     "Creative Writing", "Composition", "Oral Storytelling", "Sentence Structure",
+  ],
+  "Environmental Activities": [
+    "Our School & Home", "Plants Around Us", "Animals & Habitats",
+    "Weather & Seasons", "Water & Its Uses", "Transport & Roads",
+    "Health & Hygiene", "Food & Nutrition", "Community Helpers", "Soil & Land Use",
+  ],
+  "Hygiene & Nutrition": [
+    "Personal Hygiene", "Healthy Eating", "Food Groups",
+    "Balanced Diet", "Clean Water", "Disease Prevention",
+    "Safety at Home", "Exercise & Rest", "Food Safety", "First Aid",
   ],
   "Kiswahili": [
     "Kusoma & Silabi", "Kuandika Sentensi", "Nomino & Vitenzi",
@@ -36,28 +56,33 @@ const TOPICS_LOWER: Record<string, string[]> = {
     "Multiplication Basics", "Shapes & Geometry", "Measurement",
     "Money (KSh)", "Time & Calendar", "Patterns & Sequences", "Fractions (½ & ¼)",
   ],
-  "Environmental Activities": [
-    "Our School & Home", "Plants Around Us", "Animals & Habitats",
-    "Weather & Seasons", "Water & Its Uses", "Transport & Roads",
-    "Health & Hygiene", "Food & Nutrition", "Community Helpers", "Soil & Land Use",
-  ],
-  "Religious Education": [
-    "Creation & Thanksgiving", "Prayer & Worship", "Family & Love",
-    "Sharing & Caring", "Honesty & Truth", "Forgiveness & Peace",
-    "Values & Virtues", "Celebrations & Festivals",
-  ],
-  "Creative Activities": [
-    "Drawing & Painting", "Paper Craft", "Clay Modelling",
-    "Music & Singing", "Drama & Role Play", "Dance & Movement",
-    "Weaving & Patterns", "Printing Techniques",
-  ],
 };
 
 const TOPICS_UPPER: Record<string, string[]> = {
+  "Agriculture": [
+    "Soil & Land Preparation", "Crop Farming", "Animal Husbandry",
+    "Plant Nutrients", "Pests & Diseases", "Farm Tools & Equipment",
+    "Water Management", "Agribusiness Basics",
+  ],
+  "Creative Arts": [
+    "Drawing & Painting", "Music Theory & Practice", "Drama & Theatre",
+    "Craft & Textile", "Digital Art Basics", "Photography Appreciation",
+    "Architecture & Design", "Performance Arts",
+  ],
   "English": [
     "Reading Comprehension", "Essay Writing", "Parts of Speech",
     "Vocabulary & Idioms", "Oral & Listening Skills", "Literature: Prose",
     "Creative Writing", "Functional Writing",
+  ],
+  "Environmental Activities": [
+    "Living & Non-Living Things", "Plants & Reproduction", "Animals & Adaptation",
+    "States of Matter", "Forces & Machines", "Energy Types",
+    "Human Body & Health", "Technology & Environment",
+  ],
+  "Home Science": [
+    "Food & Nutrition", "Cooking Skills", "Clothing & Textiles",
+    "Home Management", "Personal Hygiene", "Consumer Education",
+    "Kitchen Safety", "Budgeting & Shopping",
   ],
   "Kiswahili": [
     "Ufahamu", "Insha ya Ubunifu", "Sarufi: Vitenzi",
@@ -69,83 +94,102 @@ const TOPICS_UPPER: Record<string, string[]> = {
     "Algebra & Patterns", "Geometry & Angles", "Area & Perimeter",
     "Data & Statistics", "Financial Mathematics",
   ],
-  "Science and Technology": [
-    "Living & Non-Living Things", "Plants & Reproduction", "Animals & Adaptation",
-    "States of Matter", "Forces & Machines", "Energy Types",
-    "Human Body & Health", "Technology & Environment",
+  "Social Studies": [
+    "Our County & Country", "Physical Geography of Kenya", "Kenya's History",
+    "Government & Citizenship", "Economic Activities", "African Countries & Capitals",
+    "Culture & Traditions", "Settlement & Population",
   ],
+};
+
+const TOPICS_JUNIOR: Record<string, string[]> = {
   "Agriculture": [
-    "Soil & Land Preparation", "Crop Farming", "Animal Husbandry",
-    "Plant Nutrients", "Pests & Diseases", "Farm Tools & Equipment",
-    "Water Management", "Agribusiness Basics",
+    "Crop Science", "Animal Production", "Soil Science",
+    "Farm Management", "Agro-Processing", "Horticulture",
+    "Fish & Poultry Farming", "Agricultural Economics",
+  ],
+  "Biology": [
+    "Cell Biology", "Genetics & Evolution", "Ecology & Environment",
+    "Human Physiology", "Plant Biology & Nutrition", "Microbiology",
+    "Classification of Living Things", "Reproduction & Development",
+  ],
+  "Business Studies": [
+    "Business Environment", "Entrepreneurship & Innovation", "Accounting Basics",
+    "Marketing & Commerce", "Office Management", "Business Law & Ethics",
+    "Financial Management", "Business Economics",
+  ],
+  "Chemistry": [
+    "Atomic Structure", "Chemical Bonding", "Acids, Bases & Salts",
+    "Organic Chemistry", "Electrochemistry", "Rates of Reaction",
+    "Chemical Equilibrium", "Environmental Chemistry",
+  ],
+  "Computer Science": [
+    "Computer Hardware & Systems", "Programming Fundamentals", "Data Structures & Algorithms",
+    "Databases & SQL", "Networking & Internet", "Operating Systems",
+    "Cybersecurity Basics", "Software Engineering",
+  ],
+  "Creative Arts": [
+    "Visual Arts & Design", "Music Composition", "Drama & Performance",
+    "Photography & Film", "Fashion & Textiles", "Digital Creativity",
+    "Art Appreciation", "Creative Expression",
+  ],
+  "English": [
+    "Comprehension & Summary", "Essay & Report Writing", "Advanced Grammar",
+    "Literature: Novel Analysis", "Poetry Analysis", "Drama & Performance",
+    "Oral Communication", "Functional & Research Writing",
+  ],
+  "Fasihi ya Kiswahili": [
+    "Riwaya", "Ushairi", "Tamthilia", "Hadithi Fupi",
+    "Fasihi Simulizi", "Wahusika na Mandhari", "Maudhui na Dhamira", "Mbinu za Lugha",
+  ],
+  "Geography": [
+    "Physical Geography", "Human Geography & Population", "Climate & Weather Systems",
+    "Natural Resources & Environment", "Geomorphology & Landforms", "Agriculture & Land Use",
+    "Settlement & Urbanisation", "Map Work",
+  ],
+  "History & Citizenship": [
+    "East African History", "African History", "Government & Democracy",
+    "Kenya's History", "Cultural Heritage", "Human Rights & Citizenship",
+    "Economic Development", "Leadership & Governance",
   ],
   "Home Science": [
     "Food & Nutrition", "Cooking Skills", "Clothing & Textiles",
     "Home Management", "Personal Hygiene", "Consumer Education",
     "Kitchen Safety", "Budgeting & Shopping",
   ],
-  "Social Studies": [
-    "Our County & Country", "Physical Geography of Kenya", "Kenya's History",
-    "Government & Citizenship", "Economic Activities", "African Countries & Capitals",
-    "Culture & Traditions", "Settlement & Population",
-  ],
-  "Creative Arts": [
-    "Drawing & Painting", "Music Theory & Practice", "Drama & Theatre",
-    "Craft & Textile", "Digital Art Basics", "Photography Appreciation",
-    "Architecture & Design", "Performance Arts",
-  ],
-  "Religious Education": [
-    "Old Testament Stories", "New Testament Stories", "Prayer & Worship",
-    "Christian Values & Ethics", "World Religions", "Social Justice",
-    "Faith & Service", "Church & Community",
-  ],
-};
-
-const TOPICS_JUNIOR: Record<string, string[]> = {
-  "English": [
-    "Comprehension & Summary", "Essay & Report Writing", "Advanced Grammar",
-    "Literature: Novel Analysis", "Poetry Analysis", "Drama & Performance",
-    "Oral Communication", "Functional & Research Writing",
+  "Integrated Science": [
+    "Scientific Method & Safety", "Cell Biology", "Chemistry: Atoms & Matter",
+    "Physics: Motion & Forces", "Ecology & Environment", "Genetics & Reproduction",
+    "Energy & Electricity", "Chemical Reactions",
   ],
   "Kiswahili": [
     "Ufahamu wa Kisanaa", "Insha ya Masimulizi", "Sarufi ya Kina",
     "Fasihi: Riwaya", "Ushairi wa Kisasa", "Michezo ya Kuigiza",
     "Mazungumzo Rasmi", "Utafiti wa Lugha",
   ],
+  "Literature": [
+    "Literary Genres", "Poetry Analysis", "Prose Analysis",
+    "Drama & Performance", "Characterisation", "Themes & Diction",
+    "Setting & Plot", "Literary Devices",
+  ],
   "Mathematics": [
     "Number Theory & Operations", "Algebra & Linear Equations", "Geometry & Triangles",
     "Statistics & Probability", "Financial Mathematics", "Trigonometry Basics",
     "Quadratic Expressions", "Coordinate Geometry",
   ],
-  "Religious Education": [
-    "Biblical Studies", "Christian Living", "Ethics & Morality",
-    "World Religions", "Church History", "Environmental Ethics",
-    "Justice & Peacemaking", "Faith in Society",
-  ],
-  "Social Studies": [
-    "East African History", "African Geography", "Government & Democracy",
-    "Economic Development", "Cultural Heritage", "Environmental Studies",
-    "Global Relations", "Human Rights & Citizenship",
-  ],
-  "Integrated Science": [
-    "Scientific Method & Safety", "Cell Biology", "Chemistry: Atoms & Matter",
-    "Physics: Motion & Forces", "Ecology & Environment", "Genetics & Reproduction",
-    "Energy & Electricity", "Chemical Reactions",
+  "Physics": [
+    "Mechanics & Motion", "Waves & Sound", "Light & Optics",
+    "Electricity & Magnetism", "Thermodynamics", "Modern Physics",
+    "Nuclear Physics", "Energy & Power",
   ],
   "Pre-Technical Studies": [
     "Technical Drawing", "Woodwork Basics", "Metalwork & Fabrication",
     "Electrical Wiring", "Masonry & Construction", "Plumbing Basics",
     "Electronics Fundamentals", "Workshop Safety & Practice",
   ],
-  "Agriculture and Nutrition": [
-    "Crop Science", "Animal Production", "Soil Science",
-    "Food Science & Nutrition", "Farm Management", "Agro-Processing",
-    "Horticulture", "Fish & Poultry Farming",
-  ],
-  "Creative Arts and Sports": [
-    "Visual Arts & Design", "Music Composition", "Drama & Performance",
-    "Sports Science", "Physical Education", "Photography & Film",
-    "Fashion & Textiles", "Digital Creativity",
+  "Social Studies": [
+    "East African History", "African Geography", "Government & Democracy",
+    "Economic Development", "Cultural Heritage", "Environmental Studies",
+    "Global Relations", "Human Rights & Citizenship",
   ],
 };
 
