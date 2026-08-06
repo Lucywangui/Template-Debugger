@@ -1,0 +1,1 @@
+export { socialStudiesTemplates } from "./questionTemplates";

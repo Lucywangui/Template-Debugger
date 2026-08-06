@@ -1,0 +1,1 @@
+export { literatureTemplates } from "./questionTemplates";

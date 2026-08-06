@@ -1,0 +1,1 @@
+export { geographyTemplates } from "./questionTemplates";

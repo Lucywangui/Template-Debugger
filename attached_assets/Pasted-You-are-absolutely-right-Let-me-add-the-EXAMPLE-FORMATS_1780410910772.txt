@@ -1,0 +1,396 @@
+You are absolutely right. Let me add the **EXAMPLE FORMATS** for both Topical Questions and Exam Papers so there is NO confusion.
+
+---
+
+## EXAMPLE 1: TOPICAL QUESTIONS (Multiple Choice with Check Answer)
+
+### Grade 4 English - Topical Questions (25 Questions)
+
+**Topics:** Nouns, Verbs, Tenses
+
+---
+
+**Question 1 (Nouns):**
+
+> Identify the noun in the sentence: "The cat is sleeping on the mat."
+
+| A. cat | B. sleeping | C. on | D. the |
+
+**User selects A. cat** → Click **"Check Answer"** → Shows: ✅ **CORRECT!**
+
+---
+
+**Question 2 (Verbs):**
+
+> Which word is a verb in: "She runs very fast every morning."
+
+| A. She | B. runs | C. very | D. morning |
+
+**User selects B. runs** → Click **"Check Answer"** → Shows: ✅ **CORRECT!**
+
+---
+
+**Question 3 (Tenses):**
+
+> Change to past tense: "I _____ to school yesterday."
+
+| A. go | B. goes | C. went | D. going |
+
+**User selects C. went** → Click **"Check Answer"** → Shows: ✅ **CORRECT!**
+
+---
+
+**Question 4 (Nouns):**
+
+> Identify the noun: "The teacher wrote on the blackboard."
+
+| A. teacher | B. wrote | C. on | D. blackboard |
+
+**User selects A. teacher** → Click **"Check Answer"** → Shows: ✅ **CORRECT!**
+
+---
+
+**Question 5 (Verbs):**
+
+> Fill in the blank with the correct verb: "They _____ football every Saturday."
+
+| A. play | B. plays | C. played | D. playing |
+
+**User selects A. play** → Click **"Check Answer"** → Shows: ✅ **CORRECT!**
+
+---
+
+*(Questions 6-25 continue in the same format)*
+
+---
+
+## EXAMPLE 2: FULL EXAM PAPER (Black & White, Printable, Auto-Marking)
+
+### GRADE 4 - ENGLISH ACTIVITIES
+### End of Term 1 Examination
+
+**Name:** _________________________________________
+
+**School:** _______________________________________
+
+**Date:** _________________________________________
+
+**Time:** 1 Hour 30 Minutes
+
+---
+
+**INSTRUCTIONS TO CANDIDATES**
+1. This paper consists of THREE sections: A, B and C
+2. Answer ALL questions in the spaces provided
+3. Read each question carefully before answering
+4. For Section A, circle the correct answer
+5. Check your work before submitting
+
+---
+
+## SECTION A: OBJECTIVE QUESTIONS (30 Marks)
+
+**Answer ALL questions. Circle the correct answer.**
+
+---
+
+**1.** Identify the noun in: "The dog barked loudly."
+
+| A. dog | B. barked | C. loudly | D. the |
+
+**Your answer:** _______
+
+---
+
+**2.** Which word is a verb?
+
+| A. happy | B. slowly | C. jump | D. beautiful |
+
+**Your answer:** _______
+
+---
+
+**3.** Choose the correct tense: "She _____ to school yesterday."
+
+| A. go | B. goes | C. went | D. going |
+
+**Your answer:** _______
+
+---
+
+**4.** What is the opposite of "big"?
+
+| A. large | B. huge | C. small | D. tall |
+
+**Your answer:** _______
+
+---
+
+**5.** Fill in: "I _____ a student."
+
+| A. is | B. am | C. are | D. be |
+
+**Your answer:** _______
+
+---
+
+*(Questions 6-15 continue in the same format)*
+
+---
+
+## SECTION B: SHORT ANSWER QUESTIONS (20 Marks)
+
+**Write your answer in the space provided.**
+
+---
+
+**16.** Write a sentence using the word "beautiful".
+
+_________________________________________________
+
+_________________________________________________
+
+**(4 marks)**
+
+---
+
+**17.** What is the plural of "child"?
+
+_________________________________________________
+
+**(4 marks)**
+
+---
+
+**18.** Change this sentence to past tense: "I eat an apple every day."
+
+_________________________________________________
+
+**(4 marks)**
+
+---
+
+**19.** Give one synonym for the word "happy".
+
+_________________________________________________
+
+**(4 marks)**
+
+---
+
+**20.** What is the opposite of "hot"?
+
+_________________________________________________
+
+**(4 marks)**
+
+---
+
+## SECTION C: ESSAY (20 Marks)
+
+**21.** Write a composition of 150-200 words on the topic:
+
+**"My Best Friend"**
+
+_________________________________________________
+
+_________________________________________________
+
+_________________________________________________
+
+_________________________________________________
+
+_________________________________________________
+
+_________________________________________________
+
+_________________________________________________
+
+_________________________________________________
+
+_________________________________________________
+
+_________________________________________________
+
+**(20 marks)**
+
+---
+
+## END OF EXAMINATION
+
+**Total Marks: 70**
+
+---
+
+## AFTER SUBMISSION - AUTO-MARKING RESULTS
+
+When the user clicks **"SUBMIT EXAM"**, they see:
+
+```
+📊 YOUR SCORE: 58 / 70 (83%)
+
+GRADE: A - EXCELLENT!
+
+📋 VIEW DETAILED MARKING SCHEME
+
+Section A (30 marks):
+Q1: ✓ Correct (+2)
+Q2: ✓ Correct (+2)
+Q3: ✓ Correct (+2)
+Q4: ✓ Correct (+2)
+Q5: ✓ Correct (+2)
+Q6: ✗ Incorrect. Correct: C. went (+0)
+Q7: ✓ Correct (+2)
+... (continues for all 15 questions)
+
+Section B (20 marks):
+Q16: ✓ Good answer (+4)
+Q17: ✓ Correct: children (+4)
+Q18: ✓ Correct: I ate an apple yesterday (+4)
+Q19: ⚠ Partial: joyful (+2)
+Q20: ✓ Correct: cold (+4)
+
+Section C (20 marks):
+Essay: ✓ Excellent essay (+20)
+
+Note: Short answer and essay sections are auto-scored based on length. 
+Teacher review recommended for accuracy.
+```
+
+---
+
+## EXAMPLE 3: REAL EXAM PAPER FORMAT (Grade 1 Mathematics)
+
+### GRADE 1 - MATHEMATICS ACTIVITIES
+### End of Term 1 Examination
+
+**Name:** _________________________________________
+
+**Date:** _________________________________________
+
+**Time:** 1 Hour
+
+---
+
+**INSTRUCTIONS:** Answer ALL questions. Write your answers in the spaces provided.
+
+---
+
+## SECTION A: NUMBERS (15 Marks)
+
+**1.** Write the missing number: 1, 2, __, 4, 5
+
+**Answer:** _______
+
+**(1 mark)**
+
+---
+
+**2.** Count the dots: ●●●● = _______
+
+**Answer:** _______
+
+**(1 mark)**
+
+---
+
+**3.** Circle the bigger number: 7  3
+
+**(1 mark)**
+
+---
+
+**4.** Draw 4 circles in the box below.
+
+|     |
+|-----|
+|     |
+
+**(1 mark)**
+
+---
+
+**5.** Write the number 8 in words
+
+**Answer:** _______
+
+**(1 mark)**
+
+---
+
+## SECTION B: ADDITION AND SUBTRACTION (15 Marks)
+
+**6.** Add: 🍎 + 🍎 = _______
+
+**Answer:** _______
+
+**(1 mark)**
+
+---
+
+**7.** Add: 2 + 3 = _______
+
+**Answer:** _______
+
+**(1 mark)**
+
+---
+
+**8.** Subtract: 5 - 2 = _______
+
+**Answer:** _______
+
+**(1 mark)**
+
+---
+
+**9.** Mary has 3 oranges. Her mother gives her 2 more. How many oranges does Mary have now?
+
+**Working:** _________________________________
+
+**Answer:** _______ oranges
+
+**(2 marks)**
+
+---
+
+## SECTION C: SHAPES (10 Marks)
+
+**10.** Name this shape: ⬜
+
+**Answer:** _______
+
+**(1 mark)**
+
+---
+
+**11.** Name this shape: ⬤
+
+**Answer:** _______
+
+**(1 mark)**
+
+---
+
+**12.** Colour the shape that is a circle: ⬜ ⬤ ▲ ⬛
+
+**(1 mark)**
+
+---
+
+## END OF EXAMINATION
+
+**Total Marks: 40**
+
+---
+
+## SUMMARY OF WHAT EACH MATERIAL CONTAINS
+
+| Material Type | What the User Sees | What the User Can Do |
+|---------------|-------------------|---------------------|
+| **Topical Questions** | 25 multiple choice questions on 2-3 topics | Select answer → Click "Check Answer" → See if correct |
+| **Exam Paper** | Full paper with Sections A, B, C (20-25 questions) | Answer all questions → Click "SUBMIT" → Get score and marking scheme |
+
+---
+
+**This is exactly what I need to build. Now the developer understands the exact format.**

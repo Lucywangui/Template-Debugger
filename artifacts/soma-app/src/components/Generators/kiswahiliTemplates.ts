@@ -1,0 +1,1 @@
+export { kiswahiliTemplates } from "./questionTemplates";

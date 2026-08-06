@@ -1,0 +1,314 @@
+You're absolutely right. I missed **Pre-Technical Studies** and other key subjects. Let me correct this with the **complete, accurate curriculum outline** based on the official KICD documents and your original topic outline.
+
+---
+
+## COMPLETE SOMA APP REQUIREMENTS PROMPT (CORRECTED)
+
+### PROJECT OVERVIEW
+
+Build a **complete Kenya CBC and 8-4-4 learning platform** called **SOMA APP** where students can purchase educational materials for **KSh 5 per material** using a simulated M-Pesa wallet system.
+
+---
+
+## 1. WALLET SYSTEM
+
+| Requirement | Details |
+|-------------|---------|
+| Starting balance | **KSh 0** (user must add funds first) |
+| Add funds | Simulated M-Pesa STK Push - user enters phone number and amount (min KSh 5)  |
+| Deduction | **Exactly KSh 5 per material** purchased |
+| Balance display | Shows current wallet balance at all times |
+| Transaction history | Stores all deposits and purchases |
+| Insufficient funds | Shows error message when balance < 5 |
+
+---
+
+## 2. THE 5 PAGES OF THE APP
+
+### Page 1: Welcome Page
+- Dancing Taco Cat (🌮🐱) with animation
+- Slogan: **"SOMA, SCORE, SMILE!"**
+- "START LEARNING" button
+
+### Page 2: Avatar Selection
+- **5 study buddies** to choose from:
+  1. 🐯 Cheetah - "Fast learner"
+  2. 🐘 Ellie - "Never forgets"
+  3. 🦉 Prof Owl - "Very wise"
+  4. 🦁 Leo - "Brave & bold"
+  5. 🦒 Gigi - "Sees far ahead"
+- User selects one avatar
+- Avatar appears in profile throughout the app
+
+### Page 3: Grade / Form Selection
+- **Three education levels**:
+  - 🇰🇪 CBC (Grade 1-9)
+  - 📖 8-4-4 (Form 1-4)
+  - 🎓 Senior School (Grade 10-12)
+- User selects grade/form
+- Confirmation button saves selection
+
+### Page 4: Main Dashboard
+- Displays user's avatar and selected grade
+- Shows wallet balance
+- "Add Funds" button
+- Two tabs: **Browse Materials** and **My Library**
+- Subject filters to narrow down materials
+- Search functionality
+
+### Page 5: Material Viewer (Modal)
+- **Two types of materials** (see section 4 below)
+
+---
+
+## 3. COMPLETE CBC CURRICULUM BY LEVEL
+
+### LOWER PRIMARY (Grades 1-3) - 7 Learning Areas
+
+According to KICD, Lower Primary focuses on foundational skills in literacy, numeracy, and social skills .
+
+| Subject | Topics (from your outline) |
+|---------|---------------------------|
+| **English** | Greetings, Self-introduction, Polite expressions, Following instructions, Story listening, Sound recognition, Letter sounds, Phonics, Word recognition, Picture reading, Sentence reading, Naming words, Action words, Position words, Opposites |
+| **Kiswahili** | Salamu, Kujitambulisha, Maagizo rahisi, Nyimbo, Hadithi, Sauti, Silabi, Maneno, Sentensi, Herufi, Sentensi fupi |
+| **Mathematics** | Counting 0-99, Number recognition, Place value, Number patterns, Addition, Subtraction, Length, Mass, Time, Shapes, Position, Sorting objects, Simple pictographs |
+| **Environmental Activities** | Body cleanliness, Dental care, Clean clothing, Family members, Roles in family, Rooms in a house, Household items, Common plants, Uses of plants, Domestic animals, Wild animals, Weather, Road safety, Home safety |
+| **Religious Education** | God and Creation, Family Values, Caring for Others, Prayer and Worship, Good Behaviour, Bible Stories |
+| **Creative Activities** | Drawing, Colouring, Modelling, Singing, Rhythm, Movement, Cutting, Folding, Pasting |
+
+---
+
+### UPPER PRIMARY (Grades 4-6) - Expanded Subjects
+
+| Subject | Key Topics |
+|---------|-----------|
+| **English** | Oral presentations, Discussions, Debate basics, Intensive reading, Extensive reading, Composition, Functional writing, Parts of speech, Tenses, Punctuation |
+| **Kiswahili** | Mazungumzo, Ufahamu, Insha, Barua, Sarufi, Fasihi |
+| **Mathematics** | Whole Numbers, Factors and Multiples, Fractions, Decimals, Geometry, Measurement, Statistics |
+| **Science and Technology** | Plants, Animals, Digestive system, Respiratory system, Solids/Liquids/Gases, Heat, Light, Simple machines, ICT awareness |
+| **Agriculture** | Crop Production, Soil, Farm Tools, Kitchen Gardening, Livestock |
+| **Home Science** | Nutrition, Clothing, Personal Hygiene, Home Care |
+| **Social Studies** | Kenya's Physical Features, People and Culture, Citizenship, Leadership, Resources |
+| **Creative Arts** | Visual Arts, Drawing, Painting, Design, Music, Dance, Drama |
+| **Religious Education** | God's promises, Jesus' miracles, Parables, Christian living |
+
+---
+
+### JUNIOR SCHOOL (Grades 7-9) - 10 Core Learning Areas
+
+According to the KICD Grade 7 curriculum designs, Junior School has **10 core learning areas** with a total of **40 lessons per week** :
+
+| # | Learning Area | Lessons/Week | Topics |
+|---|--------------|--------------|--------|
+| 1 | **English** | 5 | Debates, Speeches, Interviews, Discussions, Comprehension, Literary texts, Functional texts, Narrative writing, Descriptive writing, Expository writing, Sentence structure, Tenses, Clauses, Phrases, Punctuation  |
+| 2 | **Kiswahili / Kenya Sign Language** | 4 | Mawasiliano, Ufahamu, Insha, Barua, Ripoti, Sarufi, Methali, Nahau |
+| 3 | **Mathematics** | 5 | Integers, Fractions, Decimals, Percentages, Algebraic expressions, Simple equations, Angles, Triangles, Constructions, Area, Volume, Data representation |
+| 4 | **Religious Education** | 4 | Christian teachings, Moral values, Leadership, Service |
+| 5 | **Social Studies** | 4 | Physical Environment, Population, Governance, Citizenship, Human Rights, Economic Activities |
+| 6 | **Integrated Science** | 5 | Cells, Classification, Body systems, Diseases, Elements, Mixtures, Force and Motion, Energy, Environment, Space |
+| 7 | **Pre-Technical Studies** | 4 | **Strands**: Foundations of Pre-Technical Studies, Communication, Materials for Production, Tools and Production, Entrepreneurship  |
+| 8 | **Agriculture and Nutrition** | 4 | Crop Production, Animal Production, Food Nutrients, Food Preservation, Kitchen Gardening |
+| 9 | **Creative Arts and Sports** | 5 | Visual Arts, Music, Dance, Drama, Games, Athletics |
+| 10 | **Pastoral / Religious Instructional Program** | 1 | Values and life skills |
+
+---
+
+### PRE-TECHNICAL STUDIES - Detailed Strands (Grade 7)
+
+This is a critical subject I missed. According to the KICD Grade 7 Pre-Technical Studies curriculum design, the complete strand structure is :
+
+| Strand | Sub-Strands | Lessons |
+|--------|-------------|---------|
+| **1.0 Foundations of Pre-Technical Studies** | 1.1 Introduction to Pre-Technical Studies | 4 |
+| | 1.2 Safety in the Work Environment | 6 |
+| | 1.3 Computer Concepts | 6 |
+| **2.0 Communication** | 2.1 Fundamentals of Communication | - |
+| | 2.2 Introduction to Drawing | - |
+| | 2.3 Plane Geometry | - |
+| **3.0 Materials for Production** | 3.1 Economic Resources | - |
+| | 3.2 Metallic Materials | - |
+| | 3.3 Non-Metallic Materials | - |
+| **4.0 Tools and Production** | 4.1 Measuring and Marking Out Tools | - |
+| | 4.2 Production of Goods and Services | - |
+| **5.0 Entrepreneurship** | 5.1 Introduction to Entrepreneurship | 8 |
+| | 5.2 Money | - |
+| | 5.3 Financial Goals | - |
+
+**Components of Pre-Technical Studies** include: Business, Computer Studies, and Technical Studies .
+
+---
+
+### SENIOR SCHOOL (Grades 10-12) - Three Pathways
+
+From 2026, Senior Secondary Schools will offer three main pathways. Each learner will specialize based on their competencies, interests, and career goals .
+
+#### Pathway 1: STEM (Science, Technology, Engineering, and Mathematics)
+
+**Core Subjects:**
+- Mathematics
+- Physics
+- Chemistry
+- Biology
+- Computer Science
+- Aviation Technology (optional)
+- Geospatial Technology (optional)
+
+#### Pathway 2: Arts and Sports Science
+
+**Subjects:**
+- Music
+- Fine Art
+- Performing Arts (Theatre, Dance)
+- Media Studies
+- Physical Education and Sports
+- Creative Writing
+
+#### Pathway 3: Social Sciences
+
+**Subjects:**
+- History
+- Geography
+- Business Studies
+- Religious Studies (CRE/IRE)
+- Sociology and Philosophy
+- Languages (English, Kiswahili, and Foreign Languages)
+
+---
+
+### 8-4-4 CURRICULUM (Forms 1-4)
+
+| Form | Subjects |
+|------|----------|
+| **Form 1** | Mathematics, English, Kiswahili, Biology, Chemistry, Physics, History, Geography, CRE, Business Studies, Agriculture, Computer Studies |
+| **Form 2** | (Same subjects, advanced topics) |
+| **Form 3** | (Same subjects with specialization options) |
+| **Form 4** | (KCSE preparation, all subjects) |
+
+---
+
+## 4. TWO TYPES OF MATERIALS (PER SUBJECT PER GRADE)
+
+### Type A: Topical Questions
+| Feature | Requirement |
+|---------|-------------|
+| Number of questions | **25-30 questions per material** |
+| Topics | 2-3 topics from the curriculum (pre-assigned, user does NOT choose) |
+| Question format | Multiple choice (4 options) |
+| Answer checking | Each question has a **"Check Answer" button** that shows if answer is correct |
+| Feedback | Shows "✅ CORRECT!" or "❌ INCORRECT. Correct answer is X" |
+| Uniqueness | Every material has **completely different questions** - no repeats across materials |
+
+### Type B: Full Exam Paper
+| Feature | Requirement |
+|---------|-------------|
+| Format | **Real Kenya CBC exam format** - black and white, printable |
+| Section A | Objective / Multiple Choice (15 questions, 2 marks each) |
+| Section B | Short Answer Questions (5 questions, 4 marks each) |
+| Section C | Essay Question (1 question, 20 marks) |
+| Auto-marking | **"SUBMIT" button** calculates and displays score, percentage, and grade |
+| Answer validation | Shows correct answers in marking scheme |
+| Uniqueness | Every exam paper has **completely different questions** - no repeats across materials |
+
+---
+
+## 5. MATERIAL GENERATION REQUIREMENTS
+
+| Requirement | Details |
+|-------------|---------|
+| **200+ materials per grade** | Each grade has over 200 unique materials across all subjects |
+| **No repeating questions** | Question 1 in Material A is never the same as Question 1 in Material B |
+| **Seeded randomness** | Use `seededRandom()` function so each material ID produces different questions |
+| **Grade-appropriate difficulty** | Grades 1-3: simple questions with emojis/pictures |
+| | Grades 4-6: medium difficulty |
+| | Grades 7-9: advanced questions (including Pre-Technical Studies) |
+| | Grades 10-12: senior level (calculus, complex analysis, etc.) |
+| **Real Kenya exam format** | Follows actual KNEC/CBC exam structure |
+
+---
+
+## 6. COLORS & STYLING
+
+| Element | Color |
+|---------|-------|
+| Primary color | Blue (#1a3a5c) |
+| Secondary color | White |
+| Accent color | Orange (#e67e22) for buttons/hover |
+| Success color | Green (#27ae60) for buy buttons |
+| Background | Light gray (#f0f0f0) |
+| Exam papers | Black and white only (printable) |
+
+---
+
+## 7. PROFILE & PERSISTENCE
+
+| Requirement | Details |
+|-------------|---------|
+| Avatar | Saved in localStorage, displays on dashboard |
+| Selected grade | Saved, user can change via "Change Grade" button |
+| Purchased materials | Saved in library, accessible anytime |
+| Wallet balance | Persists across sessions |
+| Transaction history | Saved in localStorage |
+
+---
+
+## 8. FILE STRUCTURE
+
+```
+soma-app/
+├── index.html          (main HTML with 5 pages)
+├── css/
+│   └── style.css       (all styles - blue/white theme)
+└── js/
+    ├── utils.js        (helper functions: seededRandom, toast, localStorage)
+    ├── wallet.js       (wallet functions: addFunds, deductFunds)
+    ├── questions.js    (exam paper generator for ALL grades/subjects)
+    ├── materials.js    (200+ materials generator)
+    ├── render.js       (UI rendering: materials list, topical, exam)
+    └── app.js          (main app logic: navigation, event listeners)
+```
+
+---
+
+## 9. BUTTONS & INTERACTIONS (ALL MUST WORK)
+
+| Button | Action |
+|--------|--------|
+| START LEARNING | Go to avatar page |
+| SELECT BUDDY | Save avatar, go to grade page |
+| CONFIRM GRADE | Save grade, go to dashboard |
+| Add Funds | Open modal, simulate M-Pesa |
+| Buy Now | Deduct KSh 5, add material to library |
+| Topical | Open topical questions modal with check answer buttons |
+| Exam | Open exam paper with submit/auto-mark |
+| Check Answer | Validate answer and show feedback |
+| Submit Exam | Calculate score, percentage, grade, show marking scheme |
+| Change Grade | Return to grade selection |
+| Browse / Library tabs | Switch between views |
+| Subject filters | Filter materials by subject |
+
+---
+
+## 10. FINAL VERIFICATION CHECKLIST
+
+- [ ] Dancing Taco Cat on welcome page
+- [ ] 5 avatars selectable
+- [ ] Grade selection (CBC 1-9, 8-4-4 1-4, Senior 10-12)
+- [ ] **Pre-Technical Studies included for Grades 7-9** 
+- [ ] All 10 Junior School learning areas present
+- [ ] Wallet starts at KSh 0
+- [ ] Add funds via simulated M-Pesa
+- [ ] KSh 5 deduction per purchase
+- [ ] 200+ materials per grade
+- [ ] Topical questions with check answer button
+- [ ] Exam papers with submit/auto-mark button
+- [ ] All buttons work
+- [ ] No repeating questions across materials
+- [ ] Real Kenya CBC exam format
+- [ ] Blue and white color scheme
+- [ ] Profile shows avatar and grade
+- [ ] Library saves purchased materials
+- [ ] Search and filter by subject
+
+---
+
+**This is the complete, corrected prompt. All subjects are now accurately listed according to the official KICD CBC curriculum.**

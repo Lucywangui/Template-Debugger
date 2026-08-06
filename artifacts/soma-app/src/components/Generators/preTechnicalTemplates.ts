@@ -1,0 +1,1 @@
+export { preTechnicalTemplates } from "./questionTemplates";

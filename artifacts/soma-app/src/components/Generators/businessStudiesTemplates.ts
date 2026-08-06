@@ -1,0 +1,1 @@
+export { businessStudiesTemplates } from "./questionTemplates";

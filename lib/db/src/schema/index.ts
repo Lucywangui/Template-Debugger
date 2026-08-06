@@ -1,20 +1,28 @@
-// Export your models here. Add one export per file
-// export * from "./posts";
-//
-// Each model/table should ideally be split into different files.
-// Each model/table should define a Drizzle table, insert schema, and types:
-//
-//   import { pgTable, text, serial } from "drizzle-orm/pg-core";
-//   import { createInsertSchema } from "drizzle-zod";
-//   import { z } from "zod/v4";
-//
-//   export const postsTable = pgTable("posts", {
-//     id: serial("id").primaryKey(),
-//     title: text("title").notNull(),
-//   });
-//
-//   export const insertPostSchema = createInsertSchema(postsTable).omit({ id: true });
-//   export type InsertPost = z.infer<typeof insertPostSchema>;
-//   export type Post = typeof postsTable.$inferSelect;
+import { pgTable, text, serial, integer, jsonb, timestamp, index } from "drizzle-orm/pg-core";
 
-export {}
+export const somaMaterials = pgTable("soma_materials", {
+  id: text("id").primaryKey(),
+  gradeKey: text("grade_key").notNull(),
+  subject: text("subject").notNull(),
+  title: text("title").notNull(),
+  type: text("type").notNull(),
+  topics: text("topics").array().notNull(),
+  seedIndex: integer("seed_index").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (t) => [
+  index("soma_materials_grade_idx").on(t.gradeKey),
+]);
+
+export const somaQuestions = pgTable("soma_questions", {
+  id: serial("id").primaryKey(),
+  materialId: text("material_id").notNull().references(() => somaMaterials.id),
+  questionText: text("question_text").notNull(),
+  options: jsonb("options").$type<string[]>().notNull(),
+  correctIndex: integer("correct_index").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (t) => [
+  index("soma_questions_material_idx").on(t.materialId),
+]);
+
+export type SomaMaterial = typeof somaMaterials.$inferSelect;
+export type SomaQuestion = typeof somaQuestions.$inferSelect;

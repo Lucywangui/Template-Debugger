@@ -1,0 +1,1 @@
+export { homeScienceTemplates } from "./questionTemplates";

@@ -1,0 +1,1 @@
+export { biologyTemplates } from "./questionTemplates";

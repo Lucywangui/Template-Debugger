@@ -1,0 +1,1 @@
+- [Generator template integrity](generator-template-integrity.md) — template files are a critical parse boundary; validate their shared type and syntax before debugging UI behavior.

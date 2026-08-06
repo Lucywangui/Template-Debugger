@@ -1,0 +1,1 @@
+export { englishTemplates } from "./questionTemplates";

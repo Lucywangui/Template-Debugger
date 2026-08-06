@@ -1,10 +1,11 @@
-# [Project name]
+# SOMA APP
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+SOMA APP helps learners find, purchase, and practise curriculum learning materials with randomized multiple-choice questions.
 
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `PORT=22202 BASE_PATH=/ pnpm --filter @workspace/soma-app run dev` — run the SOMA learner app
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -22,23 +23,32 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/soma-app/src/pages/` — onboarding and learner dashboard screens
+- `artifacts/soma-app/src/components/` — material cards, viewers, wallet modal, and UI components
+- `artifacts/soma-app/src/data/materials.ts` — curriculum material catalog
+- `artifacts/soma-app/src/data/questions.ts` — question selection and answer-shuffling logic
+- `artifacts/soma-app/src/components/Generators/questionTemplates.ts` — valid subject template banks
+- `artifacts/soma-app/src/lib/storage.ts` — local learner, wallet, purchase, and quiz-result state
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Question generation is offline and template-backed so a learner can open purchased materials without depending on an external AI service.
+- Each material opening selects up to 15 subject-specific templates and shuffles both questions and answer choices while preserving the correct answer index.
+- Learner progress, wallet balance, purchases, and quiz results remain in browser storage, matching the original app's offline flow.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Learners complete a short onboarding flow, choose a curriculum level, search materials, purchase them with wallet funds, and open topical or exam practice.
+- Every opened material presents 15 randomized multiple-choice questions from the repaired template banks.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Keep the existing app structure and behavior; do not introduce a replacement framework or unrelated features.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- The SOMA Vite config intentionally requires `PORT` and `BASE_PATH`; the preview workflow must provide both values.
+- Run the root `typecheck` after editing generator templates because parser errors in one template can create thousands of misleading downstream diagnostics.
 
 ## Pointers
 

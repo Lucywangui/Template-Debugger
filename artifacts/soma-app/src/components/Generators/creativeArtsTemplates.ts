@@ -1,0 +1,1 @@
+export { artsTemplates as creativeArtsTemplates } from "./questionTemplates";
