@@ -1,3 +1,5 @@
+import { TEMPLATE_SUBJECTS_BY_GRADE } from "@/components/Generators/questionTemplates";
+
 export function seededRandom(seed: number): () => number {
   let s = seed;
   return () => {
@@ -21,7 +23,7 @@ export interface Material {
 // ─── Topic definitions per curriculum level ────────────────────────────────────
 
 const TOPICS_LOWER: Record<string, string[]> = {
-  "CRE": [
+  "Christian Religious Education": [
     "Creation & Thanksgiving", "Prayer & Worship", "Family & Love",
     "Sharing & Caring", "Honesty & Truth", "Forgiveness & Peace",
     "Values & Virtues", "Celebrations & Festivals",
@@ -41,7 +43,7 @@ const TOPICS_LOWER: Record<string, string[]> = {
     "Weather & Seasons", "Water & Its Uses", "Transport & Roads",
     "Health & Hygiene", "Food & Nutrition", "Community Helpers", "Soil & Land Use",
   ],
-  "Hygiene & Nutrition": [
+  "Hygiene and Nutrition": [
     "Personal Hygiene", "Healthy Eating", "Food Groups",
     "Balanced Diet", "Clean Water", "Disease Prevention",
     "Safety at Home", "Exercise & Rest", "Food Safety", "First Aid",
@@ -74,11 +76,6 @@ const TOPICS_UPPER: Record<string, string[]> = {
     "Vocabulary & Idioms", "Oral & Listening Skills", "Literature: Prose",
     "Creative Writing", "Functional Writing",
   ],
-  "Environmental Activities": [
-    "Living & Non-Living Things", "Plants & Reproduction", "Animals & Adaptation",
-    "States of Matter", "Forces & Machines", "Energy Types",
-    "Human Body & Health", "Technology & Environment",
-  ],
   "Home Science": [
     "Food & Nutrition", "Cooking Skills", "Clothing & Textiles",
     "Home Management", "Personal Hygiene", "Consumer Education",
@@ -107,49 +104,25 @@ const TOPICS_JUNIOR: Record<string, string[]> = {
     "Farm Management", "Agro-Processing", "Horticulture",
     "Fish & Poultry Farming", "Agricultural Economics",
   ],
-  "Biology": [
-    "Cell Biology", "Genetics & Evolution", "Ecology & Environment",
-    "Human Physiology", "Plant Biology & Nutrition", "Microbiology",
-    "Classification of Living Things", "Reproduction & Development",
-  ],
-  "Business Studies": [
-    "Business Environment", "Entrepreneurship & Innovation", "Accounting Basics",
-    "Marketing & Commerce", "Office Management", "Business Law & Ethics",
-    "Financial Management", "Business Economics",
-  ],
-  "Chemistry": [
-    "Atomic Structure", "Chemical Bonding", "Acids, Bases & Salts",
-    "Organic Chemistry", "Electrochemistry", "Rates of Reaction",
-    "Chemical Equilibrium", "Environmental Chemistry",
-  ],
   "Computer Science": [
     "Computer Hardware & Systems", "Programming Fundamentals", "Data Structures & Algorithms",
     "Databases & SQL", "Networking & Internet", "Operating Systems",
     "Cybersecurity Basics", "Software Engineering",
   ],
-  "Creative Arts": [
+  "Creative Arts and Sports": [
     "Visual Arts & Design", "Music Composition", "Drama & Performance",
-    "Photography & Film", "Fashion & Textiles", "Digital Creativity",
-    "Art Appreciation", "Creative Expression",
+    "Sports Science", "Physical Education", "Photography & Film",
+    "Fashion & Textiles", "Digital Creativity",
   ],
   "English": [
     "Comprehension & Summary", "Essay & Report Writing", "Advanced Grammar",
     "Literature: Novel Analysis", "Poetry Analysis", "Drama & Performance",
     "Oral Communication", "Functional & Research Writing",
   ],
-  "Fasihi ya Kiswahili": [
-    "Riwaya", "Ushairi", "Tamthilia", "Hadithi Fupi",
-    "Fasihi Simulizi", "Wahusika na Mandhari", "Maudhui na Dhamira", "Mbinu za Lugha",
-  ],
-  "Geography": [
-    "Physical Geography", "Human Geography & Population", "Climate & Weather Systems",
-    "Natural Resources & Environment", "Geomorphology & Landforms", "Agriculture & Land Use",
-    "Settlement & Urbanisation", "Map Work",
-  ],
-  "History & Citizenship": [
-    "East African History", "African History", "Government & Democracy",
-    "Kenya's History", "Cultural Heritage", "Human Rights & Citizenship",
-    "Economic Development", "Leadership & Governance",
+  "Health Education": [
+    "Personal Health", "Human Body & Health", "Nutrition",
+    "Disease Prevention", "First Aid", "Safety & Risk Prevention",
+    "Physical Activity", "Mental & Social Wellbeing",
   ],
   "Home Science": [
     "Food & Nutrition", "Cooking Skills", "Clothing & Textiles",
@@ -166,20 +139,10 @@ const TOPICS_JUNIOR: Record<string, string[]> = {
     "Fasihi: Riwaya", "Ushairi wa Kisasa", "Michezo ya Kuigiza",
     "Mazungumzo Rasmi", "Utafiti wa Lugha",
   ],
-  "Literature": [
-    "Literary Genres", "Poetry Analysis", "Prose Analysis",
-    "Drama & Performance", "Characterisation", "Themes & Diction",
-    "Setting & Plot", "Literary Devices",
-  ],
   "Mathematics": [
     "Number Theory & Operations", "Algebra & Linear Equations", "Geometry & Triangles",
     "Statistics & Probability", "Financial Mathematics", "Trigonometry Basics",
     "Quadratic Expressions", "Coordinate Geometry",
-  ],
-  "Physics": [
-    "Mechanics & Motion", "Waves & Sound", "Light & Optics",
-    "Electricity & Magnetism", "Thermodynamics", "Modern Physics",
-    "Nuclear Physics", "Energy & Power",
   ],
   "Pre-Technical Studies": [
     "Technical Drawing", "Woodwork Basics", "Metalwork & Fabrication",
@@ -191,6 +154,18 @@ const TOPICS_JUNIOR: Record<string, string[]> = {
     "Economic Development", "Cultural Heritage", "Environmental Studies",
     "Global Relations", "Human Rights & Citizenship",
   ],
+};
+
+const TOPICS_BY_SOURCE_GRADE: Record<string, Record<string, string[]>> = {
+  "Grade 1": TOPICS_LOWER,
+  "Grade 2": TOPICS_LOWER,
+  "Grade 3": TOPICS_LOWER,
+  "Grade 4": TOPICS_UPPER,
+  "Grade 5": TOPICS_UPPER,
+  "Grade 6": TOPICS_UPPER,
+  "Grade 7": TOPICS_JUNIOR,
+  "Grade 8": TOPICS_JUNIOR,
+  "Grade 9": TOPICS_JUNIOR,
 };
 
 const TOPICS_SENIOR: Record<string, string[]> = {
@@ -224,7 +199,7 @@ const TOPICS_SENIOR: Record<string, string[]> = {
     "Human Physiology", "Plant Biology & Nutrition", "Microbiology",
     "Classification of Living Things", "Biotechnology & Genetics",
   ],
-  "History": [
+  "History and Citizenship": [
     "Pre-Colonial African History", "Colonial Era in Kenya", "Kenyan Independence Movement",
     "Post-Independence Africa", "World History: 20th Century", "African Political Systems",
     "Economic History of Africa", "Contemporary African Issues",
@@ -244,7 +219,30 @@ const TOPICS_SENIOR: Record<string, string[]> = {
     "Databases & SQL", "Networking & Internet", "Operating Systems",
     "Cybersecurity Basics", "Software Engineering",
   ],
+  "Christian Religious Education": [
+    "Biblical Studies", "Christian Living", "Ethics & Morality",
+    "World Religions", "Church History", "Environmental Ethics",
+    "Justice & Peacemaking", "Faith in Society",
+  ],
+  "Fasihi ya Kiswahili": [
+    "Riwaya", "Ushairi", "Tamthilia", "Hadithi Fupi",
+    "Fasihi Simulizi", "Wahusika na Mandhari", "Maudhui na Dhamira", "Mbinu za Lugha",
+  ],
+  "Home Science": [
+    "Food & Nutrition", "Cooking Skills", "Clothing & Textiles",
+    "Home Management", "Personal Hygiene", "Consumer Education",
+    "Kitchen Safety", "Budgeting & Shopping",
+  ],
+  "Literature": [
+    "Literary Genres", "Poetry Analysis", "Prose Analysis",
+    "Drama & Performance", "Characterisation", "Themes & Diction",
+    "Setting & Plot", "Literary Devices",
+  ],
 };
+
+TOPICS_BY_SOURCE_GRADE["Grade 10"] = TOPICS_SENIOR;
+TOPICS_BY_SOURCE_GRADE["Grade 11"] = TOPICS_SENIOR;
+TOPICS_BY_SOURCE_GRADE["Grade 12"] = TOPICS_SENIOR;
 
 // 8-4-4 topics (same subjects, slightly different framing)
 const TOPICS_844: Record<string, string[]> = {
@@ -311,10 +309,21 @@ const GRADES = [
 ];
 
 function getTopicsForGrade(gradeKey: string): Record<string, string[]> {
-  if (["cbc-1","cbc-2","cbc-3"].includes(gradeKey)) return TOPICS_LOWER;
-  if (["cbc-4","cbc-5","cbc-6"].includes(gradeKey)) return TOPICS_UPPER;
-  if (["cbc-7","cbc-8","cbc-9"].includes(gradeKey)) return TOPICS_JUNIOR;
-  if (gradeKey.startsWith("senior-")) return TOPICS_SENIOR;
+  const sourceGrade = gradeKey.startsWith("cbc-")
+    ? `Grade ${gradeKey.slice(4)}`
+    : gradeKey.startsWith("senior-")
+      ? `Grade ${gradeKey.slice(7)}`
+      : null;
+  if (sourceGrade) {
+    const subjects = TEMPLATE_SUBJECTS_BY_GRADE[sourceGrade as keyof typeof TEMPLATE_SUBJECTS_BY_GRADE];
+    const sourceTopics = TOPICS_BY_SOURCE_GRADE[sourceGrade];
+    const topics: Record<string, string[]> = {};
+    for (const subject of subjects ?? []) {
+      const subjectTopics = sourceTopics?.[subject];
+      if (subjectTopics) topics[subject] = subjectTopics;
+    }
+    return topics;
+  }
   return TOPICS_844;
 }
 

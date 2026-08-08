@@ -1,0 +1,1 @@
+export { healthEducationTemplates } from "./questionTemplates";

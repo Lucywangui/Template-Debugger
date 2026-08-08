@@ -217,30 +217,75 @@ export const chemistryTemplates = makeRules("Chemistry", scienceSeeds);
 export const integratedScienceTemplates = makeRules("Integrated Science", scienceSeeds);
 export const physicsTemplates = makeRules("Physics", scienceSeeds);
 export const environmentalActivitiesTemplates = makeRules("Environmental Activities", scienceSeeds);
-export const hygieneAndNutritionTemplates = makeRules("Hygiene & Nutrition", homeScienceSeeds);
-export const creTemplates = makeRules("CRE", religionSeeds);
+export const hygieneAndNutritionTemplates = makeRules("Hygiene and Nutrition", homeScienceSeeds);
+export const creTemplates = makeRules("Christian Religious Education", religionSeeds);
 export const fasihiYaKiswahiliTemplates = makeRules("Fasihi ya Kiswahili", kiswahiliSeeds);
-export const historyAndCitizenshipTemplates = makeRules("History & Citizenship", socialStudiesSeeds);
+export const historyAndCitizenshipTemplates = makeRules("History and Citizenship", socialStudiesSeeds);
 export const geographyTemplates = makeRules("Geography", socialStudiesSeeds);
 export const businessStudiesTemplates = makeRules("Business Studies", socialStudiesSeeds);
 export const computerScienceTemplates = makeRules("Computer Science", technologySeeds);
 export const literatureTemplates = makeRules("Literature", englishSeeds);
 export const preTechnicalTemplates = makeRules("Pre-Technical Studies", technologySeeds);
+export const healthEducationTemplates = makeRules("Health Education", homeScienceSeeds);
+export const creativeArtsAndSportsTemplates = makeRules("Creative Arts and Sports", artsSeeds);
 
+// Source of truth: the grade and subject fields in the uploaded generator files.
+// Some original files intentionally do not contain every grade (for example,
+// the original Mathematics file has Grade 4 and Grades 7–12, but no Grade 5–6).
 export const TEMPLATE_SUBJECTS_BY_GRADE = {
-  lower: [
-    "CRE", "Creative Arts", "English", "Environmental Activities",
-    "Hygiene & Nutrition", "Kiswahili", "Mathematics",
+  "Grade 1": [
+    "Christian Religious Education", "Creative Arts", "English",
+    "Environmental Activities", "Hygiene and Nutrition", "Kiswahili", "Mathematics",
   ],
-  upper: [
-    "Agriculture", "Creative Arts", "English", "Environmental Activities",
-    "Home Science", "Kiswahili", "Mathematics", "Social Studies",
+  "Grade 2": [
+    "Christian Religious Education", "Creative Arts", "English",
+    "Environmental Activities", "Hygiene and Nutrition", "Kiswahili", "Mathematics",
   ],
-  junior: [
-    "Agriculture", "Biology", "Business Studies", "Chemistry", "Computer Science",
-    "Creative Arts", "English", "Fasihi ya Kiswahili", "Geography",
-    "History & Citizenship", "Home Science", "Integrated Science", "Kiswahili",
-    "Literature", "Mathematics", "Physics", "Pre-Technical Studies", "Social Studies",
+  "Grade 3": [
+    "Christian Religious Education", "Creative Arts", "English",
+    "Environmental Activities", "Hygiene and Nutrition", "Kiswahili", "Mathematics",
+  ],
+  "Grade 4": [
+    "Agriculture", "Creative Arts", "English", "Home Science",
+    "Kiswahili", "Mathematics", "Social Studies",
+  ],
+  "Grade 5": [
+    "Agriculture", "Creative Arts", "English", "Home Science", "Kiswahili", "Social Studies",
+  ],
+  "Grade 6": [
+    "Agriculture", "Creative Arts", "English", "Home Science", "Kiswahili", "Social Studies",
+  ],
+  "Grade 7": [
+    "Agriculture", "Creative Arts and Sports", "Computer Science", "English",
+    "Health Education", "Home Science", "Integrated Science", "Kiswahili",
+    "Mathematics", "Pre-Technical Studies", "Social Studies",
+  ],
+  "Grade 8": [
+    "Agriculture", "Creative Arts and Sports", "Computer Science", "English",
+    "Health Education", "Home Science", "Integrated Science", "Kiswahili",
+    "Mathematics", "Pre-Technical Studies", "Social Studies",
+  ],
+  "Grade 9": [
+    "Agriculture", "Creative Arts and Sports", "Computer Science", "English",
+    "Health Education", "Home Science", "Integrated Science", "Kiswahili",
+    "Mathematics", "Pre-Technical Studies", "Social Studies",
+  ],
+  "Grade 10": [
+    "Biology", "Business Studies", "Chemistry", "Computer Science", "English",
+    "Fasihi ya Kiswahili", "Geography", "History and Citizenship", "Home Science",
+    "Kiswahili", "Literature", "Mathematics", "Physics",
+  ],
+  "Grade 11": [
+    "Biology", "Business Studies", "Chemistry", "Computer Science",
+    "Christian Religious Education", "English", "Fasihi ya Kiswahili",
+    "Geography", "History and Citizenship", "Home Science", "Kiswahili",
+    "Literature", "Mathematics", "Physics",
+  ],
+  "Grade 12": [
+    "Biology", "Business Studies", "Chemistry", "Computer Science",
+    "Christian Religious Education", "English", "Fasihi ya Kiswahili",
+    "Geography", "History and Citizenship", "Home Science", "Kiswahili",
+    "Literature", "Mathematics", "Physics",
   ],
 } as const;
 
@@ -258,14 +303,16 @@ export const TEMPLATE_RULES_BY_SUBJECT: Record<string, TemplateRule[]> = {
   "Integrated Science": integratedScienceTemplates,
   Physics: physicsTemplates,
   "Environmental Activities": environmentalActivitiesTemplates,
-  "Hygiene & Nutrition": hygieneAndNutritionTemplates,
-  CRE: creTemplates,
+  "Hygiene and Nutrition": hygieneAndNutritionTemplates,
+  "Christian Religious Education": creTemplates,
   "Fasihi ya Kiswahili": fasihiYaKiswahiliTemplates,
-  "History & Citizenship": historyAndCitizenshipTemplates,
+  "History and Citizenship": historyAndCitizenshipTemplates,
   Geography: geographyTemplates,
   "Business Studies": businessStudiesTemplates,
   Literature: literatureTemplates,
   "Pre-Technical Studies": preTechnicalTemplates,
+  "Health Education": healthEducationTemplates,
+  "Creative Arts and Sports": creativeArtsAndSportsTemplates,
 };
 
 export function getTemplateRules(subject: string): TemplateRule[] {
@@ -273,14 +320,13 @@ export function getTemplateRules(subject: string): TemplateRule[] {
 }
 
 export function getTemplateRulesForGrade(subject: string, gradeKey: string): TemplateRule[] {
-  const gradeSubjects =
-    ["cbc-1", "cbc-2", "cbc-3"].includes(gradeKey)
-      ? TEMPLATE_SUBJECTS_BY_GRADE.lower
-      : ["cbc-4", "cbc-5", "cbc-6"].includes(gradeKey)
-        ? TEMPLATE_SUBJECTS_BY_GRADE.upper
-        : ["cbc-7", "cbc-8", "cbc-9"].includes(gradeKey)
-          ? TEMPLATE_SUBJECTS_BY_GRADE.junior
-          : null;
+  const sourceGrade =
+    gradeKey.startsWith("cbc-") ? `Grade ${gradeKey.slice(4)}` :
+      gradeKey.startsWith("senior-") ? `Grade ${gradeKey.slice(7)}` :
+        null;
+  const gradeSubjects = sourceGrade
+    ? TEMPLATE_SUBJECTS_BY_GRADE[sourceGrade as keyof typeof TEMPLATE_SUBJECTS_BY_GRADE]
+    : null;
 
   if (gradeSubjects && !gradeSubjects.some((allowedSubject) => allowedSubject === subject)) {
     return [];

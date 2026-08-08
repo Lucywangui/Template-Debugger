@@ -1,2 +1,3 @@
 - [Generator template integrity](generator-template-integrity.md) — template files are a critical parse boundary; validate their shared type and syntax before debugging UI behavior.
-- [Grade subject registry](grade-subject-registry.md) — generator subjects must exactly match the approved Lower, Upper, and Junior CBC lists; unknown subjects must not use a fallback.
+- [Generator file curriculum](generator-file-curriculum.md) — grade subjects come from the uploaded generator files, including their exact names and grade-specific omissions.
+- [SOMA workflow ownership](soma-workflow-ownership.md) — only one SOMA workflow should own port 22202; stop legacy duplicate previews before restarting the artifact service.
