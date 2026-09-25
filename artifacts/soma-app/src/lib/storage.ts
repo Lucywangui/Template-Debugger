@@ -22,6 +22,28 @@ export interface Transaction {
   date: string;
 }
 
+/** Balances and unlocks as the server reports them. */
+export interface ServerAccount {
+  coins: number;
+  ksh: number;
+  unlocked: string[];
+  earnedToday: number;
+  imported: boolean;
+  prices: Prices;
+}
+
+export interface Prices {
+  materialCoins: number;
+  kshPerCoin: number;
+  dailyCap: number;
+}
+
+const DEFAULT_PRICES: Prices = {
+  materialCoins: 5,
+  kshPerCoin: 1,
+  dailyCap: 200,
+};
+
 export interface QuizResult {
   id: string;
   materialId: string;
@@ -235,7 +257,7 @@ function getOrCreateSomaHubCode(): string {
    BACKEND SYNCHRONIZATION
    ========================================================= */
 
-const SOMA_API_BASE_URL =
+export const SOMA_API_BASE_URL =
   (
     import.meta.env
       .VITE_API_BASE_URL as
@@ -244,7 +266,7 @@ const SOMA_API_BASE_URL =
   )?.replace(/\/$/, "") ||
   "http://127.0.0.1:5000";
 
-async function syncStudentToBackend(data: {
+export async function syncStudentToBackend(data: {
   soma_hub_code: string;
   name: string;
   school_name: string;
@@ -454,12 +476,19 @@ interface SomaState {
 
   activeGrade: string | null;
 
+  /** Coin balance; a cache of the server account. */
   wallet: number;
+  /** M-Pesa wallet in KSh; null until the server has answered. */
+  ksh: number | null;
+  prices: Prices;
   xp: number;
   streak: Streak;
   dailyGoal: number;
 
+  /** Unlocked materials shown in the library (server unlocks minus hidden). */
   purchased: string[];
+  /** Unlocked materials the student removed from their library. */
+  libraryHidden: string[];
   transactions: Transaction[];
   quizResults: QuizResult[];
   quizProgress: Record<string, QuizProgress>;
@@ -497,15 +526,14 @@ interface SomaState {
     materialId: string
   ) => number;
 
-  addFunds: (
-    amount: number,
-    description: string
+  applyAccount: (
+    account: ServerAccount
   ) => void;
 
-  purchaseMaterial: (
-    id: string,
-    amount: number
-  ) => boolean;
+  /** Puts an unlocked material back in the library after it was removed. */
+  showInLibrary: (
+    id: string
+  ) => void;
 
   removePurchased: (
     id: string
@@ -550,6 +578,9 @@ const KEYS = [
   "soma_streak",
   "soma_daily_goal",
   "soma_purchased",
+  "soma_library_hidden",
+  "soma_ksh",
+  "soma_reward_outbox",
   "soma_transactions",
   "soma_quiz_results",
   "soma_quiz_progress",
@@ -676,6 +707,13 @@ export const useSomaStore =
         100
       ),
 
+      ksh: loadState<number | null>(
+        "soma_ksh",
+        null
+      ),
+
+      prices: DEFAULT_PRICES,
+
       xp: loadState<number>(
         "soma_xp",
         0
@@ -694,6 +732,12 @@ export const useSomaStore =
       purchased:
         loadState<string[]>(
           "soma_purchased",
+          []
+        ),
+
+      libraryHidden:
+        loadState<string[]>(
+          "soma_library_hidden",
           []
         ),
 
@@ -1071,133 +1115,66 @@ export const useSomaStore =
          WALLET
          ===================================================== */
 
-      addFunds: (
-        amount,
-        description
+      applyAccount: (
+        account
       ) => {
         set((state) => {
-          const wallet =
-            state.wallet +
-            amount;
+          const unlocked =
+            new Set(account.unlocked);
 
-          const transactions = [
-            {
-              id: Math.random()
-                .toString(36)
-                .slice(2, 9),
+          const libraryHidden =
+            state.libraryHidden.filter(
+              (id) => unlocked.has(id)
+            );
 
-              type:
-                "deposit" as const,
+          const purchased =
+            account.unlocked.filter(
+              (id) =>
+                !libraryHidden.includes(id)
+            );
 
-              amount,
-
-              description,
-
-              date:
-                new Date().toISOString(),
-            },
-
-            ...state.transactions,
-          ].slice(0, 100);
-
+          save("soma_wallet", account.coins);
+          save("soma_ksh", account.ksh);
+          save("soma_purchased", purchased);
           save(
-            "soma_wallet",
-            wallet
-          );
-
-          save(
-            "soma_transactions",
-            transactions
+            "soma_library_hidden",
+            libraryHidden
           );
 
           return {
-            wallet,
-            transactions,
+            wallet: account.coins,
+            ksh: account.ksh,
+            prices: account.prices,
+            purchased,
+            libraryHidden,
           };
         });
       },
 
-      purchaseMaterial: (
-        id,
-        amount
-      ) => {
-        const state = get();
-
-        if (
-          state.purchased.includes(
-            id
-          )
-        ) {
-          return true;
-        }
-
-        if (
-          state.wallet < amount
-        ) {
-          return false;
-        }
-
-        const wallet =
-          state.wallet - amount;
-
-        const purchased = [
-          ...state.purchased,
-          id,
-        ];
-
-        const transactions = [
-          {
-            id: Math.random()
-              .toString(36)
-              .slice(2, 9),
-
-            type:
-              "purchase" as const,
-
-            amount,
-
-            description:
-              "Opened material",
-
-            date:
-              new Date().toISOString(),
-          },
-
-          ...state.transactions,
-        ].slice(0, 100);
-
-        save(
-          "soma_wallet",
-          wallet
-        );
-
-        save(
-          "soma_purchased",
-          purchased
-        );
-
-        save(
-          "soma_transactions",
-          transactions
-        );
-
-        set({
-          wallet,
-          purchased,
-          transactions,
-        });
-
-        return true;
-      },
-
-      removePurchased: (
+      showInLibrary: (
         id
       ) => {
         set((state) => {
-          const purchased =
-            state.purchased.filter(
-              (p) => p !== id
+          if (
+            !state.libraryHidden.includes(id)
+          ) {
+            return state;
+          }
+
+          const libraryHidden =
+            state.libraryHidden.filter(
+              (hidden) => hidden !== id
             );
+
+          const purchased = [
+            ...state.purchased,
+            id,
+          ];
+
+          save(
+            "soma_library_hidden",
+            libraryHidden
+          );
 
           save(
             "soma_purchased",
@@ -1205,7 +1182,43 @@ export const useSomaStore =
           );
 
           return {
+            libraryHidden,
             purchased,
+          };
+        });
+      },
+
+      removePurchased: (
+        id
+      ) => {
+        set((state) => {
+          // Unlocks live on the server, so removing only hides
+          // the material. Opening it again costs nothing.
+          const purchased =
+            state.purchased.filter(
+              (p) => p !== id
+            );
+
+          const libraryHidden = [
+            ...new Set([
+              ...state.libraryHidden,
+              id,
+            ]),
+          ];
+
+          save(
+            "soma_purchased",
+            purchased
+          );
+
+          save(
+            "soma_library_hidden",
+            libraryHidden
+          );
+
+          return {
+            purchased,
+            libraryHidden,
           };
         });
       },
@@ -1316,9 +1329,8 @@ export const useSomaStore =
           ...state.quizResults,
         ].slice(0, 200);
 
-        const wallet =
-          state.wallet +
-          coinsEarned;
+        // Coins are credited by the server (see claimReward in
+        // lib/account.ts); coinsEarned is only for the result screen.
 
         const xp =
           state.xp +
@@ -1608,11 +1620,6 @@ export const useSomaStore =
         );
 
         save(
-          "soma_wallet",
-          wallet
-        );
-
-        save(
           "soma_xp",
           xp
         );
@@ -1634,7 +1641,6 @@ export const useSomaStore =
 
         set({
           quizResults,
-          wallet,
           xp,
           streak,
           transactions,
@@ -1755,6 +1761,8 @@ export const useSomaStore =
           activeGrade: null,
 
           wallet: 100,
+          ksh: null,
+          prices: DEFAULT_PRICES,
           xp: 0,
 
           streak: {
@@ -1764,6 +1772,7 @@ export const useSomaStore =
           dailyGoal: 2,
 
           purchased: [],
+          libraryHidden: [],
           transactions: [],
           quizResults: [],
           quizProgress: {},

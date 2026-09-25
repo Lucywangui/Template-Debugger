@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
+import { Toaster as HookToaster } from "@/components/ui/toaster";
 
 import { useSomaStore } from "./lib/storage";
-import { resolveGrade } from "./lib/gradeUtils";
+import { syncAccount } from "./lib/account";
+import { resolveGrade } from "./data/grade";
 
 import WelcomePage from "./pages/WelcomePage";
-import NamePage from "./pages/NamePage";
-import GradePage from "./pages/GradePage";
+import { NamePage } from "./pages/NamePage";
+import { GradePage } from "./pages/GradePage";
 import SchoolPage from "./pages/SchoolPage";
-import IntentPage from "./pages/IntentPage";
-import PathwayPage from "./pages/PathwayPage";
-import AvatarPage from "./pages/AvatarPage";
-import DashboardPage from "./pages/DashboardPage";
+import { IntentPage } from "./pages/IntentPage";
+import { PathwayPage } from "./pages/PathwayPage";
+import { AvatarPage } from "./pages/AvatarPage";
+import { DashboardPage } from "./pages/DashboardPage";
 import DeveloperLoginPage from "./pages/DeveloperLoginPage";
 import DeveloperDashboardPage from "./pages/DeveloperDashboardPage";
 
-import ViewerModal from "./components/ViewerModal";
+import { ViewerModal } from "./components/ViewerModal";
 
 type PageState =
   | "welcome"
@@ -47,6 +49,30 @@ function App() {
 
   const [developerLoggedIn, setDeveloperLoggedIn] =
     useState(false);
+
+  /*
+   * Load coins, KSh and unlocks from the server, and send any
+   * quiz rewards earned offline once the connection is back.
+   */
+  const onDashboard = currentPage === "dashboard";
+
+  useEffect(() => {
+    // Wait until signup is finished: the server can't register a
+    // student without their school and grade.
+    if (!name || !onDashboard) return;
+
+    const sync = () => {
+      syncAccount().catch((error) =>
+        console.warn("[SOMA HUB] Account sync failed:", error)
+      );
+    };
+
+    sync();
+    window.addEventListener("online", sync);
+
+    return () =>
+      window.removeEventListener("online", sync);
+  }, [name, onDashboard]);
 
   /*
    * Check the normal student onboarding state.
@@ -220,7 +246,7 @@ function App() {
     return (
       <>
         <NamePage
-          onContinue={() => setCurrentPage("grade")}
+          onNext={() => setCurrentPage("grade")}
         />
 
         <Toaster position="top-center" />
@@ -232,7 +258,7 @@ function App() {
     return (
       <>
         <GradePage
-          onContinue={() => setCurrentPage("school")}
+          onNext={() => setCurrentPage("school")}
         />
 
         <Toaster position="top-center" />
@@ -244,7 +270,7 @@ function App() {
     return (
       <>
         <SchoolPage
-          onContinue={() => setCurrentPage("intent")}
+          onNext={() => setCurrentPage("intent")}
         />
 
         <Toaster position="top-center" />
@@ -256,7 +282,8 @@ function App() {
     return (
       <>
         <IntentPage
-          onContinue={() => setCurrentPage("pathway")}
+          onNext={() => setCurrentPage("pathway")}
+          onBack={() => setCurrentPage("school")}
         />
 
         <Toaster position="top-center" />
@@ -268,7 +295,8 @@ function App() {
     return (
       <>
         <PathwayPage
-          onContinue={() => setCurrentPage("avatar")}
+          onNext={() => setCurrentPage("avatar")}
+          onBack={() => setCurrentPage("intent")}
         />
 
         <Toaster position="top-center" />
@@ -280,7 +308,7 @@ function App() {
     return (
       <>
         <AvatarPage
-          onContinue={() => setCurrentPage("dashboard")}
+          onNext={() => setCurrentPage("dashboard")}
         />
 
         <Toaster position="top-center" />
@@ -307,6 +335,8 @@ function App() {
       )}
 
       <Toaster position="top-center" />
+      {/* The dashboard and wallet modal use the use-toast hook. */}
+      <HookToaster />
     </>
   );
 }

@@ -8,6 +8,7 @@ import {
 } from "@/data/questions";
 
 import { useSomaStore } from "@/lib/storage";
+import { claimReward } from "@/lib/account";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -225,6 +226,12 @@ export function TopicalViewer({
         type: "topical",
         score,
         total: questions.length,
+        percentage: pct,
+      });
+
+      void claimReward({
+        materialId: material.id,
+        type: "topical",
         percentage: pct,
       });
 
