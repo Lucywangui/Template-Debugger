@@ -32,8 +32,8 @@ export function MaterialCard({ material, isPurchased, onBuy, onOpen, onDelete }:
       <CardContent className="flex-1 pt-4 pb-2">
         <p className="text-sm text-muted-foreground">
           {material.type === "exam"
-            ? "Full paper with Section A, B & C."
-            : "15 multiple choice questions."}
+            ? "15-question exam paper · timed at senior levels"
+            : "15 questions with worked explanations"}
         </p>
       </CardContent>
 
@@ -66,7 +66,7 @@ export function MaterialCard({ material, isPurchased, onBuy, onOpen, onDelete }:
             onClick={onBuy}
             data-testid={`btn-buy-${material.id}`}
           >
-            BUY NOW - KSh 5
+            OPEN · 🪙 5
           </Button>
         )}
       </CardFooter>

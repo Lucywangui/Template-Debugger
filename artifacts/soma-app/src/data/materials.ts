@@ -66,6 +66,11 @@ const TOPICS_UPPER: Record<string, string[]> = {
     "Plant Nutrients", "Pests & Diseases", "Farm Tools & Equipment",
     "Water Management", "Agribusiness Basics",
   ],
+  "Christian Religious Education": [
+    "Creation & Care for the Environment", "The Bible", "The Life of Jesus",
+    "Christian Values", "Prayer & Worship", "The Church",
+    "Christian Festivals", "Living as a Christian",
+  ],
   "Creative Arts": [
     "Drawing & Painting", "Music Theory & Practice", "Drama & Theatre",
     "Craft & Textile", "Digital Art Basics", "Photography Appreciation",
@@ -99,15 +104,15 @@ const TOPICS_UPPER: Record<string, string[]> = {
 };
 
 const TOPICS_JUNIOR: Record<string, string[]> = {
-  "Agriculture": [
-    "Crop Science", "Animal Production", "Soil Science",
-    "Farm Management", "Agro-Processing", "Horticulture",
-    "Fish & Poultry Farming", "Agricultural Economics",
+  "Agriculture and Nutrition": [
+    "Crop Production", "Livestock Production", "Soil & Water Conservation",
+    "Food & Nutrition", "Food Preparation & Preservation", "Consumer Awareness",
+    "Home & Kitchen Safety", "Agribusiness & Farm Records",
   ],
-  "Computer Science": [
-    "Computer Hardware & Systems", "Programming Fundamentals", "Data Structures & Algorithms",
-    "Databases & SQL", "Networking & Internet", "Operating Systems",
-    "Cybersecurity Basics", "Software Engineering",
+  "Christian Religious Education": [
+    "Creation", "The Bible", "Life & Teachings of Jesus Christ",
+    "Christian Values", "The Church", "Christian Living Today",
+    "Sin & Salvation", "The Holy Spirit",
   ],
   "Creative Arts and Sports": [
     "Visual Arts & Design", "Music Composition", "Drama & Performance",
@@ -119,20 +124,10 @@ const TOPICS_JUNIOR: Record<string, string[]> = {
     "Literature: Novel Analysis", "Poetry Analysis", "Drama & Performance",
     "Oral Communication", "Functional & Research Writing",
   ],
-  "Health Education": [
-    "Personal Health", "Human Body & Health", "Nutrition",
-    "Disease Prevention", "First Aid", "Safety & Risk Prevention",
-    "Physical Activity", "Mental & Social Wellbeing",
-  ],
-  "Home Science": [
-    "Food & Nutrition", "Cooking Skills", "Clothing & Textiles",
-    "Home Management", "Personal Hygiene", "Consumer Education",
-    "Kitchen Safety", "Budgeting & Shopping",
-  ],
   "Integrated Science": [
     "Scientific Method & Safety", "Cell Biology", "Chemistry: Atoms & Matter",
     "Physics: Motion & Forces", "Ecology & Environment", "Genetics & Reproduction",
-    "Energy & Electricity", "Chemical Reactions",
+    "Energy & Electricity", "Health & Disease",
   ],
   "Kiswahili": [
     "Ufahamu wa Kisanaa", "Insha ya Masimulizi", "Sarufi ya Kina",
@@ -331,33 +326,30 @@ export function getSubjectsForGrade(gradeKey: string): string[] {
   return Object.keys(getTopicsForGrade(gradeKey));
 }
 
-// ─── Material title builder ────────────────────────────────────────────────────
-
-function topicPair(topics: string[], topicalIndex: number): string[] {
-  const n = topics.length;
-  // cycle in pairs; every 3rd topical uses 3 topics
-  const base = (topicalIndex * 2) % n;
-  const t1 = topics[base % n];
-  const t2 = topics[(base + 1) % n];
-  if (topicalIndex % 3 === 2) {
-    const t3 = topics[(base + 2) % n];
-    return [t1, t2, t3];
-  }
-  return [t1, t2];
-}
-
-function topicTitle(subject: string, topics: string[]): string {
-  if (topics.length === 3) return `${subject}: ${topics[0]}, ${topics[1]} & ${topics[2]}`;
-  return `${subject}: ${topics[0]} & ${topics[1]}`;
-}
-
 // ─── Generator ────────────────────────────────────────────────────────────────
+//
+// Per subject: ~27 distinct topical quizzes (focused, then paired, then trebled
+// combinations of the syllabus topics) plus 3 whole-syllabus practice exams —
+// about 30 materials, all with distinct titles. The engine seeds each material
+// separately so every one produces a different question set.
 
-function materialsPerSubject(gradeKey: string): number {
-  if (["cbc-1","cbc-2","cbc-3"].includes(gradeKey)) return 34; // 6 × 34 = 204
-  if (["cbc-4","cbc-5","cbc-6"].includes(gradeKey)) return 23; // 9 × 23 = 207
-  if (["cbc-7","cbc-8","cbc-9"].includes(gradeKey)) return 23; // 9 × 23 = 207
-  return 21; // 10 × 21 = 210 for Senior & 8-4-4
+const EXAMS_PER_SUBJECT = 3;
+const TOPICAL_TARGET = 27;
+
+function titleFor(subject: string, topics: string[]): string {
+  if (topics.length === 1) return `${subject}: ${topics[0]}`;
+  if (topics.length === 2) return `${subject}: ${topics[0]} + ${topics[1]}`;
+  return `${subject}: ${topics[0]}, ${topics[1]} + ${topics[2]}`;
+}
+
+function topicCombos(topics: string[]): string[][] {
+  const n = topics.length;
+  const combos: string[][] = [];
+  for (let i = 0; i < n; i++) combos.push([topics[i]]);                         // singles
+  for (let i = 0; i < n; i++) combos.push([topics[i], topics[(i + 1) % n]]);    // adjacent pairs
+  if (n >= 4) for (let i = 0; i < n; i++) combos.push([topics[i], topics[(i + 2) % n]]); // skip pairs
+  if (n >= 3) for (let i = 0; i < n; i++) combos.push([topics[i], topics[(i + 1) % n], topics[(i + 2) % n]]); // triples
+  return combos;
 }
 
 function generateMaterials(): Material[] {
@@ -366,31 +358,38 @@ function generateMaterials(): Material[] {
 
   for (const grade of GRADES) {
     const topicsMap = getTopicsForGrade(grade);
-    const subjects = Object.keys(topicsMap);
-    const count = materialsPerSubject(grade);
 
-    for (const subject of subjects) {
+    for (const subject of Object.keys(topicsMap)) {
       const topics = topicsMap[subject];
-      let topicalIdx = 0;
+      const slug = subject.toLowerCase().replace(/[\s&,()/:]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      let tn = 0;
+      let en = 0;
 
-      for (let i = 1; i <= count; i++) {
-        const isExam = i % 5 === 0;
-        const type: MaterialType = isExam ? "exam" : "topical";
-        const slug = subject.toLowerCase().replace(/[\s&,()/:]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-        const id = `${grade}-${slug}-${type}-${i}`;
+      const add = (type: MaterialType, n: number, title: string, mTopics: string[]) => {
+        all.push({ id: `${grade}-${slug}-${type}-${n}`, gradeKey: grade, subject, title, type, seedIndex: seed++, topics: mTopics });
+      };
 
-        let title: string;
-        let mTopics: string[];
-
-        if (isExam) {
-          title = `${subject} – End-of-Term Examination`;
-          mTopics = topics.slice(); // all topics
-        } else {
-          mTopics = topicPair(topics, topicalIdx++);
-          title = topicTitle(subject, mTopics);
+      const combos = topicCombos(topics);
+      // Top up with extra "more practice" passes over the single topics if a
+      // small syllabus can't supply TOPICAL_TARGET distinct combinations.
+      for (let pass = 2; combos.length < TOPICAL_TARGET; pass++) {
+        for (const t of topics) {
+          if (combos.length >= TOPICAL_TARGET) break;
+          combos.push([t, ` ${pass}`]); // sentinel marks a repeat pass
         }
+      }
 
-        all.push({ id, gradeKey: grade, subject, title, type, seedIndex: seed++, topics: mTopics });
+      for (const combo of combos.slice(0, TOPICAL_TARGET)) {
+        const repeatPass = combo[1]?.startsWith(" ") ? combo[1].slice(1) : null;
+        const realTopics = repeatPass ? [combo[0]] : combo;
+        const title = repeatPass
+          ? `${subject}: ${combo[0]} · Set ${repeatPass}`
+          : titleFor(subject, realTopics);
+        add("topical", ++tn, title, realTopics);
+      }
+
+      for (let k = 1; k <= EXAMS_PER_SUBJECT; k++) {
+        add("exam", ++en, `${subject} — Practice Exam ${k}`, topics.slice());
       }
     }
   }

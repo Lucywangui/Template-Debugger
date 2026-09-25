@@ -229,9 +229,9 @@ export const preTechnicalTemplates = makeRules("Pre-Technical Studies", technolo
 export const healthEducationTemplates = makeRules("Health Education", homeScienceSeeds);
 export const creativeArtsAndSportsTemplates = makeRules("Creative Arts and Sports", artsSeeds);
 
-// Source of truth: the grade and subject fields in the uploaded generator files.
-// Some original files intentionally do not contain every grade (for example,
-// the original Mathematics file has Grade 4 and Grades 7–12, but no Grade 5–6).
+// Subjects offered per grade, aligned to the Kenyan CBE curriculum.
+// (The original seed data omitted Grade 5–6 Mathematics; restored here since
+//  Maths is a core Upper-Primary learning area and the engine supports it.)
 export const TEMPLATE_SUBJECTS_BY_GRADE = {
   "Grade 1": [
     "Christian Religious Education", "Creative Arts", "English",
@@ -246,28 +246,30 @@ export const TEMPLATE_SUBJECTS_BY_GRADE = {
     "Environmental Activities", "Hygiene and Nutrition", "Kiswahili", "Mathematics",
   ],
   "Grade 4": [
-    "Agriculture", "Creative Arts", "English", "Home Science",
-    "Kiswahili", "Mathematics", "Social Studies",
+    "Agriculture", "Christian Religious Education", "Creative Arts", "English",
+    "Home Science", "Kiswahili", "Mathematics", "Social Studies",
   ],
   "Grade 5": [
-    "Agriculture", "Creative Arts", "English", "Home Science", "Kiswahili", "Social Studies",
+    "Agriculture", "Christian Religious Education", "Creative Arts", "English",
+    "Home Science", "Kiswahili", "Mathematics", "Social Studies",
   ],
   "Grade 6": [
-    "Agriculture", "Creative Arts", "English", "Home Science", "Kiswahili", "Social Studies",
+    "Agriculture", "Christian Religious Education", "Creative Arts", "English",
+    "Home Science", "Kiswahili", "Mathematics", "Social Studies",
   ],
   "Grade 7": [
-    "Agriculture", "Creative Arts and Sports", "Computer Science", "English",
-    "Health Education", "Home Science", "Integrated Science", "Kiswahili",
+    "Agriculture and Nutrition", "Christian Religious Education",
+    "Creative Arts and Sports", "English", "Integrated Science", "Kiswahili",
     "Mathematics", "Pre-Technical Studies", "Social Studies",
   ],
   "Grade 8": [
-    "Agriculture", "Creative Arts and Sports", "Computer Science", "English",
-    "Health Education", "Home Science", "Integrated Science", "Kiswahili",
+    "Agriculture and Nutrition", "Christian Religious Education",
+    "Creative Arts and Sports", "English", "Integrated Science", "Kiswahili",
     "Mathematics", "Pre-Technical Studies", "Social Studies",
   ],
   "Grade 9": [
-    "Agriculture", "Creative Arts and Sports", "Computer Science", "English",
-    "Health Education", "Home Science", "Integrated Science", "Kiswahili",
+    "Agriculture and Nutrition", "Christian Religious Education",
+    "Creative Arts and Sports", "English", "Integrated Science", "Kiswahili",
     "Mathematics", "Pre-Technical Studies", "Social Studies",
   ],
   "Grade 10": [

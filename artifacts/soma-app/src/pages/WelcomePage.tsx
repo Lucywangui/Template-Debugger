@@ -2,22 +2,48 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
 interface Props {
-  onNext: () => void;
+  onContinue: () => void;
+  onDeveloperLogin: () => void;
 }
 
-export function WelcomePage({ onNext }: Props) {
+export default function WelcomePage({
+  onContinue,
+  onDeveloperLogin,
+}: Props) {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
-      style={{ background: "linear-gradient(135deg, #0d2137 0%, #1a3a5c 50%, #1e4d7b 100%)" }}
+      style={{
+        background:
+          "linear-gradient(135deg, #0d2137 0%, #1a3a5c 50%, #1e4d7b 100%)",
+      }}
     >
       {/* Background decorative circles */}
-      <div className="absolute top-0 left-0 w-64 h-64 rounded-full opacity-10"
-        style={{ background: "radial-gradient(circle, #4a9eff, transparent)", transform: "translate(-30%, -30%)" }} />
-      <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-10"
-        style={{ background: "radial-gradient(circle, #e67e22, transparent)", transform: "translate(30%, 30%)" }} />
-      <div className="absolute top-1/3 right-10 w-32 h-32 rounded-full opacity-5"
-        style={{ background: "radial-gradient(circle, #ffffff, transparent)" }} />
+      <div
+        className="absolute top-0 left-0 w-64 h-64 rounded-full opacity-10"
+        style={{
+          background:
+            "radial-gradient(circle, #4a9eff, transparent)",
+          transform: "translate(-30%, -30%)",
+        }}
+      />
+
+      <div
+        className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-10"
+        style={{
+          background:
+            "radial-gradient(circle, #e67e22, transparent)",
+          transform: "translate(30%, 30%)",
+        }}
+      />
+
+      <div
+        className="absolute top-1/3 right-10 w-32 h-32 rounded-full opacity-5"
+        style={{
+          background:
+            "radial-gradient(circle, #ffffff, transparent)",
+        }}
+      />
 
       {/* Dancing Lion */}
       <motion.div
@@ -32,12 +58,14 @@ export function WelcomePage({ onNext }: Props) {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        style={{ filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.4))" }}
+        style={{
+          filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.4))",
+        }}
       >
         🦁
       </motion.div>
 
-      {/* 3D SOMA APP text */}
+      {/* 3D SOMA HUB text */}
       <h1
         className="font-extrabold tracking-widest text-center mb-3 select-none"
         style={{
@@ -53,7 +81,7 @@ export function WelcomePage({ onNext }: Props) {
           letterSpacing: "0.12em",
         }}
       >
-        SOMA APP
+        SOMA HUB
       </h1>
 
       {/* Tagline */}
@@ -61,7 +89,11 @@ export function WelcomePage({ onNext }: Props) {
         className="text-xl md:text-2xl font-semibold mb-12 tracking-wider italic"
         style={{ color: "#e67e22" }}
         animate={{ opacity: [0.7, 1, 0.7] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
       >
         SOMA, SCORE, SMILE!
       </motion.p>
@@ -75,16 +107,27 @@ export function WelcomePage({ onNext }: Props) {
           size="lg"
           className="text-xl font-bold px-14 py-8 rounded-full shadow-2xl border-0"
           style={{
-            background: "linear-gradient(135deg, #e67e22, #d35400)",
+            background:
+              "linear-gradient(135deg, #e67e22, #d35400)",
             color: "#fff",
-            boxShadow: "0 8px 32px rgba(230,126,34,0.5), 0 2px 8px rgba(0,0,0,0.3)",
+            boxShadow:
+              "0 8px 32px rgba(230,126,34,0.5), 0 2px 8px rgba(0,0,0,0.3)",
           }}
-          onClick={onNext}
+          onClick={onContinue}
           data-testid="btn-start-learning"
         >
           START LEARNING
         </Button>
       </motion.div>
+
+      {/* Developer login */}
+      <button
+        type="button"
+        onClick={onDeveloperLogin}
+        className="mt-6 text-sm text-slate-300 hover:text-white underline underline-offset-4 transition-colors"
+      >
+        Developer Login
+      </button>
 
       {/* Floating stars */}
       {[...Array(6)].map((_, i) => (
@@ -96,8 +139,15 @@ export function WelcomePage({ onNext }: Props) {
             top: `${15 + (i % 3) * 25}%`,
             opacity: 0.25,
           }}
-          animate={{ y: [0, -12, 0], opacity: [0.15, 0.35, 0.15] }}
-          transition={{ duration: 2 + i * 0.4, repeat: Infinity, delay: i * 0.3 }}
+          animate={{
+            y: [0, -12, 0],
+            opacity: [0.15, 0.35, 0.15],
+          }}
+          transition={{
+            duration: 2 + i * 0.4,
+            repeat: Infinity,
+            delay: i * 0.3,
+          }}
         >
           ⭐
         </motion.div>

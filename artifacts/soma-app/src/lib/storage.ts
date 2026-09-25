@@ -1,8 +1,22 @@
 import { create } from "zustand";
+import type { Question } from "@/data/questions";
+import type { Pathway } from "@/data/curriculum";
+
+/** A quiz the learner started but has not finished — lets them resume later. */
+export interface QuizProgress {
+  materialId: string;
+  type: "topical" | "exam";
+  questions: Question[];
+  answers: Record<number, string>;
+  currentIndex: number;
+  score: number;
+  startedAt: string;
+  updatedAt: string;
+}
 
 export interface Transaction {
   id: string;
-  type: "deposit" | "purchase";
+  type: "deposit" | "purchase" | "reward";
   amount: number;
   description: string;
   date: string;
@@ -13,128 +27,1791 @@ export interface QuizResult {
   materialId: string;
   materialTitle: string;
   subject: string;
+  gradeKey: string;
+  topics: string[];
   type: "topical" | "exam";
   score: number;
   total: number;
   percentage: number;
+  xpEarned: number;
+  coinsEarned: number;
   date: string;
 }
+
+export type StudyIntent =
+  | "exam"
+  | "keep-up"
+  | "catch-up"
+  | "get-ahead";
+
+export interface Streak {
+  count: number;
+  best: number;
+  lastActiveDate: string;
+}
+
+/* =========================================================
+   SOMA HUB TERM PERFORMANCE
+   ========================================================= */
+
+export type SchoolTerm = 1 | 2 | 3;
+
+export type TermPointCategory =
+  | "studyNotes"
+  | "topicalQuizzes"
+  | "exams"
+  | "consistency"
+  | "progress";
+
+export interface TermPoints {
+  year: number;
+  term: SchoolTerm;
+  studyNotes: number;
+  topicalQuizzes: number;
+  exams: number;
+  consistency: number;
+  progress: number;
+}
+
+export const TERM_POINT_LIMITS: Record<
+  TermPointCategory,
+  number
+> = {
+  studyNotes: 20,
+  topicalQuizzes: 25,
+  exams: 25,
+  consistency: 15,
+  progress: 15,
+};
+
+export const STUDY_NOTES_POINTS_PER_COMPLETION = 2;
+
+export const TOPICAL_QUIZ_TERM_POINTS = 5;
+
+export const EXAM_TERM_POINTS = 8;
+
+export const CONSISTENCY_TERM_POINTS = 2;
+
+/**
+ * Progress rule:
+ * Every 5 percentage points of improvement
+ * in quiz/exam performance earns 1 progress point.
+ */
+export const PROGRESS_PERCENTAGE_STEP = 5;
+
+export const PROGRESS_POINTS_PER_STEP = 1;
+
+export const MAX_TERM_POINTS = 100;
+
+export function getTermPointsTotal(
+  termPoints: TermPoints
+): number {
+  return Math.min(
+    MAX_TERM_POINTS,
+    termPoints.studyNotes +
+    termPoints.topicalQuizzes +
+    termPoints.exams +
+    termPoints.consistency +
+    termPoints.progress
+  );
+}
+
+export function getCurrentSchoolTerm(
+  date = new Date()
+): {
+  year: number;
+  term: SchoolTerm;
+} {
+  const month = date.getMonth();
+
+  if (month <= 3) {
+    return {
+      year: date.getFullYear(),
+      term: 1,
+    };
+  }
+
+  if (month <= 7) {
+    return {
+      year: date.getFullYear(),
+      term: 2,
+    };
+  }
+
+  return {
+    year: date.getFullYear(),
+    term: 3,
+  };
+}
+
+function createEmptyTermPoints(
+  year: number,
+  term: SchoolTerm
+): TermPoints {
+  return {
+    year,
+    term,
+    studyNotes: 0,
+    topicalQuizzes: 0,
+    exams: 0,
+    consistency: 0,
+    progress: 0,
+  };
+}
+
+/* =========================================================
+   REWARDS
+   ========================================================= */
+
+const COINS_PER_TOPICAL = 15;
+const COINS_PER_EXAM = 25;
+const PERFECT_BONUS = 10;
+const STREAK_MILESTONE_BONUS = 40;
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function daysBetween(
+  a: string,
+  b: string
+): number {
+  return Math.round(
+    (Date.parse(b) - Date.parse(a)) / 86400000
+  );
+}
+
+/* =========================================================
+   SOMA HUB STUDENT CODE
+   ========================================================= */
+
+function generateSomaHubCode(): string {
+  const characters =
+    "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+  let code = "SH-";
+
+  for (let i = 0; i < 6; i += 1) {
+    code += characters.charAt(
+      Math.floor(
+        Math.random() * characters.length
+      )
+    );
+  }
+
+  return code;
+}
+
+function getOrCreateSomaHubCode(): string {
+  try {
+    const existing =
+      localStorage.getItem(
+        "soma_hub_code"
+      );
+
+    if (existing) {
+      try {
+        return JSON.parse(existing);
+      } catch {
+        return existing;
+      }
+    }
+
+    const newCode =
+      generateSomaHubCode();
+
+    localStorage.setItem(
+      "soma_hub_code",
+      JSON.stringify(newCode)
+    );
+
+    return newCode;
+  } catch {
+    return generateSomaHubCode();
+  }
+}
+
+/* =========================================================
+   BACKEND SYNCHRONIZATION
+   ========================================================= */
+
+const SOMA_API_BASE_URL =
+  (
+    import.meta.env
+      .VITE_API_BASE_URL as
+    | string
+    | undefined
+  )?.replace(/\/$/, "") ||
+  "http://127.0.0.1:5000";
+
+async function syncStudentToBackend(data: {
+  soma_hub_code: string;
+  name: string;
+  school_name: string;
+  grade: string;
+}): Promise<void> {
+  console.log(
+    "[SOMA HUB] Starting backend sync:",
+    data
+  );
+
+  if (
+    !data.soma_hub_code ||
+    !data.name
+  ) {
+    console.warn(
+      "[SOMA HUB] Sync skipped because SOMA HUB Code or name is missing:",
+      data
+    );
+
+    return;
+  }
+
+  try {
+    const response =
+      await fetch(
+        `${SOMA_API_BASE_URL}/api/students/register`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify(data),
+        }
+      );
+
+    const responseText =
+      await response.text();
+
+    console.log(
+      "[SOMA HUB] Backend response:",
+      response.status,
+      responseText
+    );
+
+    if (!response.ok) {
+      console.error(
+        "[SOMA HUB] Backend rejected student:",
+        response.status,
+        responseText
+      );
+    } else {
+      console.log(
+        "[SOMA HUB] Student successfully synced to backend."
+      );
+    }
+  } catch (error) {
+    console.error(
+      "[SOMA HUB] Backend sync failed:",
+      error
+    );
+  }
+}
+
+/* =========================================================
+   PERFORMANCE BACKEND SYNCHRONIZATION
+   ========================================================= */
+
+async function syncStudentPerformanceToBackend(data: {
+  soma_hub_code: string;
+  term_points: TermPoints[];
+  quiz_results: QuizResult[];
+}): Promise<void> {
+  console.log(
+    "[SOMA HUB] Starting performance sync:",
+    data
+  );
+
+  if (!data.soma_hub_code) {
+    console.warn(
+      "[SOMA HUB] Performance sync skipped because SOMA HUB Code is missing."
+    );
+
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `${SOMA_API_BASE_URL}/api/students/performance`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          soma_hub_code:
+            data.soma_hub_code,
+
+          term_points:
+            data.term_points.map(
+              (term) => ({
+                term_key:
+                  `${term.year}-T${term.term}`,
+
+                study_notes_points:
+                  term.studyNotes,
+
+                topical_quiz_points:
+                  term.topicalQuizzes,
+
+                exam_points:
+                  term.exams,
+
+                consistency_points:
+                  term.consistency,
+
+                improvement_points:
+                  term.progress,
+
+                total_points:
+                  getTermPointsTotal(term),
+              })
+            ),
+
+          quiz_results:
+            data.quiz_results.map(
+              (result) => ({
+                material_id:
+                  result.materialId,
+
+                material_title:
+                  result.materialTitle,
+
+                subject:
+                  result.subject,
+
+                grade_key:
+                  result.gradeKey,
+
+                quiz_type:
+                  result.type,
+
+                score:
+                  result.score,
+
+                total:
+                  result.total,
+
+                percentage:
+                  result.percentage,
+
+                completed_at:
+                  result.date,
+              })
+            ),
+        }),
+      }
+    );
+
+    const responseText =
+      await response.text();
+
+    console.log(
+      "[SOMA HUB] Performance backend response:",
+      response.status,
+      responseText
+    );
+
+    if (!response.ok) {
+      console.error(
+        "[SOMA HUB] Performance sync rejected:",
+        response.status,
+        responseText
+      );
+    } else {
+      console.log(
+        "[SOMA HUB] Performance successfully synced."
+      );
+    }
+  } catch (error) {
+    console.error(
+      "[SOMA HUB] Performance sync failed:",
+      error
+    );
+  }
+}
+
+/* =========================================================
+   STORE
+   ========================================================= */
 
 interface SomaState {
   name: string | null;
   avatar: string | null;
   grade: string | null;
+  schoolName: string | null;
+
+  somaHubCode: string;
+
+  studyIntent: StudyIntent | null;
+
+  pathway: Pathway | null;
+
+  activeGrade: string | null;
+
   wallet: number;
+  xp: number;
+  streak: Streak;
+  dailyGoal: number;
+
   purchased: string[];
   transactions: Transaction[];
   quizResults: QuizResult[];
+  quizProgress: Record<string, QuizProgress>;
+
+  termPoints: Record<string, TermPoints>;
+
+  studyNotesCompleted: Record<
+    string,
+    string[]
+  >;
+
   setName: (name: string) => void;
   setAvatar: (avatar: string) => void;
   setGrade: (grade: string) => void;
-  addFunds: (amount: number, description: string) => void;
-  purchaseMaterial: (id: string, amount: number) => boolean;
-  removePurchased: (id: string) => void;
-  addQuizResult: (result: Omit<QuizResult, "id" | "date">) => void;
+  setSchoolName: (
+    schoolName: string
+  ) => void;
+  setStudyIntent: (
+    intent: StudyIntent
+  ) => void;
+  setPathway: (
+    pathway: Pathway | null
+  ) => void;
+  setActiveGrade: (
+    grade: string | null
+  ) => void;
+  setDailyGoal: (n: number) => void;
+
+  addTermPoints: (
+    category: TermPointCategory,
+    amount: number
+  ) => number;
+
+  completeStudyNotes: (
+    materialId: string
+  ) => number;
+
+  addFunds: (
+    amount: number,
+    description: string
+  ) => void;
+
+  purchaseMaterial: (
+    id: string,
+    amount: number
+  ) => boolean;
+
+  removePurchased: (
+    id: string
+  ) => void;
+
+  addQuizResult: (
+    result: Omit<
+      QuizResult,
+      | "id"
+      | "date"
+      | "xpEarned"
+      | "coinsEarned"
+    >
+  ) => {
+    xpEarned: number;
+    coinsEarned: number;
+    streak: Streak;
+  };
+
+  saveQuizProgress: (
+    progress: QuizProgress
+  ) => void;
+
+  clearQuizProgress: (
+    materialId: string
+  ) => void;
+
   logout: () => void;
 }
 
 const KEYS = [
-  "soma_name", "soma_avatar", "soma_grade",
-  "soma_wallet", "soma_purchased", "soma_transactions", "soma_quiz_results",
+  "soma_name",
+  "soma_avatar",
+  "soma_grade",
+  "soma_school_name",
+  "soma_hub_code",
+  "soma_intent",
+  "soma_pathway",
+  "soma_active_grade",
+  "soma_wallet",
+  "soma_xp",
+  "soma_streak",
+  "soma_daily_goal",
+  "soma_purchased",
+  "soma_transactions",
+  "soma_quiz_results",
+  "soma_quiz_progress",
+  "soma_term_points",
+  "soma_study_notes_completed",
 ];
 
-export const useSomaStore = create<SomaState>((set, get) => {
-  const loadState = <T>(key: string, defaultValue: T): T => {
-    try {
-      const stored = localStorage.getItem(key);
-      return stored ? JSON.parse(stored) : defaultValue;
-    } catch {
-      return defaultValue;
+const EMPTY_STREAK: Streak = {
+  count: 0,
+  best: 0,
+  lastActiveDate: "",
+};
+
+export const useSomaStore =
+  create<SomaState>((set, get) => {
+    const loadState = <T>(
+      key: string,
+      defaultValue: T
+    ): T => {
+      try {
+        const stored =
+          localStorage.getItem(key);
+
+        return stored
+          ? JSON.parse(stored)
+          : defaultValue;
+      } catch {
+        return defaultValue;
+      }
+    };
+
+    const save = (
+      key: string,
+      value: unknown
+    ) => {
+      try {
+        localStorage.setItem(
+          key,
+          JSON.stringify(value)
+        );
+      } catch {
+        /* private mode */
+      }
+    };
+
+    const initialSomaHubCode =
+      getOrCreateSomaHubCode();
+
+    const initialName =
+      loadState<string | null>(
+        "soma_name",
+        null
+      );
+
+    const initialSchoolName =
+      loadState<string | null>(
+        "soma_school_name",
+        null
+      );
+
+    const initialGrade =
+      loadState<string | null>(
+        "soma_grade",
+        null
+      );
+
+    /*
+     * If this device already has a student account,
+     * synchronize that existing account with Flask.
+     *
+     * This does NOT create a new SOMA HUB Code.
+     * It sends the existing locally stored code.
+     */
+    if (initialName) {
+      void syncStudentToBackend({
+        soma_hub_code:
+          initialSomaHubCode,
+
+        name: initialName,
+
+        school_name:
+          initialSchoolName ?? "",
+
+        grade:
+          initialGrade ?? "",
+      });
     }
-  };
 
-  return {
-    name: loadState<string | null>("soma_name", null),
-    avatar: loadState<string | null>("soma_avatar", null),
-    grade: loadState<string | null>("soma_grade", null),
-    wallet: loadState<number>("soma_wallet", 0),
-    purchased: loadState<string[]>("soma_purchased", []),
-    transactions: loadState<Transaction[]>("soma_transactions", []),
-    quizResults: loadState<QuizResult[]>("soma_quiz_results", []),
+    return {
+      name: initialName,
 
-    setName: (name) => {
-      localStorage.setItem("soma_name", JSON.stringify(name));
-      set({ name });
-    },
-    setAvatar: (avatar) => {
-      localStorage.setItem("soma_avatar", JSON.stringify(avatar));
-      set({ avatar });
-    },
-    setGrade: (grade) => {
-      localStorage.setItem("soma_grade", JSON.stringify(grade));
-      set({ grade });
-    },
-    addFunds: (amount, description) => {
-      set((state) => {
-        const newWallet = state.wallet + amount;
-        const newTransaction: Transaction = {
-          id: Math.random().toString(36).substring(7),
-          type: "deposit",
-          amount,
-          description,
-          date: new Date().toISOString(),
+      avatar: loadState<string | null>(
+        "soma_avatar",
+        null
+      ),
+
+      grade: initialGrade,
+
+      schoolName: initialSchoolName,
+
+      somaHubCode:
+        initialSomaHubCode,
+
+      studyIntent:
+        loadState<StudyIntent | null>(
+          "soma_intent",
+          null
+        ),
+
+      pathway:
+        loadState<Pathway | null>(
+          "soma_pathway",
+          null
+        ),
+
+      activeGrade:
+        loadState<string | null>(
+          "soma_active_grade",
+          null
+        ),
+
+      wallet: loadState<number>(
+        "soma_wallet",
+        100
+      ),
+
+      xp: loadState<number>(
+        "soma_xp",
+        0
+      ),
+
+      streak: loadState<Streak>(
+        "soma_streak",
+        EMPTY_STREAK
+      ),
+
+      dailyGoal: loadState<number>(
+        "soma_daily_goal",
+        2
+      ),
+
+      purchased:
+        loadState<string[]>(
+          "soma_purchased",
+          []
+        ),
+
+      transactions:
+        loadState<Transaction[]>(
+          "soma_transactions",
+          []
+        ),
+
+      quizResults:
+        loadState<QuizResult[]>(
+          "soma_quiz_results",
+          []
+        ),
+
+      quizProgress:
+        loadState<
+          Record<string, QuizProgress>
+        >(
+          "soma_quiz_progress",
+          {}
+        ),
+
+      termPoints:
+        loadState<
+          Record<string, TermPoints>
+        >(
+          "soma_term_points",
+          {}
+        ),
+
+      studyNotesCompleted:
+        loadState<
+          Record<string, string[]>
+        >(
+          "soma_study_notes_completed",
+          {}
+        ),
+
+      /* =====================================================
+         PROFILE
+         ===================================================== */
+
+      setName: (name) => {
+        save("soma_name", name);
+
+        set({ name });
+
+        const state = get();
+
+        void syncStudentToBackend({
+          soma_hub_code:
+            state.somaHubCode,
+
+          name,
+
+          school_name:
+            state.schoolName ?? "",
+
+          grade:
+            state.grade ?? "",
+        });
+      },
+
+      setAvatar: (avatar) => {
+        save("soma_avatar", avatar);
+
+        set({ avatar });
+      },
+
+      setGrade: (grade) => {
+        save(
+          "soma_grade",
+          grade
+        );
+
+        save(
+          "soma_active_grade",
+          null
+        );
+
+        set({
+          grade,
+          activeGrade: null,
+        });
+
+        const state = get();
+
+        if (state.name) {
+          void syncStudentToBackend({
+            soma_hub_code:
+              state.somaHubCode,
+
+            name:
+              state.name,
+
+            school_name:
+              state.schoolName ?? "",
+
+            grade,
+          });
+        }
+      },
+
+      setSchoolName: (
+        schoolName
+      ) => {
+        save(
+          "soma_school_name",
+          schoolName
+        );
+
+        set({ schoolName });
+
+        const state = get();
+
+        if (state.name) {
+          void syncStudentToBackend({
+            soma_hub_code:
+              state.somaHubCode,
+
+            name:
+              state.name,
+
+            school_name:
+              schoolName,
+
+            grade:
+              state.grade ?? "",
+          });
+        }
+      },
+
+      setStudyIntent: (
+        studyIntent
+      ) => {
+        save(
+          "soma_intent",
+          studyIntent
+        );
+
+        set({ studyIntent });
+      },
+
+      setPathway: (
+        pathway
+      ) => {
+        save(
+          "soma_pathway",
+          pathway
+        );
+
+        set({ pathway });
+      },
+
+      setActiveGrade: (
+        activeGrade
+      ) => {
+        save(
+          "soma_active_grade",
+          activeGrade
+        );
+
+        set({ activeGrade });
+      },
+
+      setDailyGoal: (
+        dailyGoal
+      ) => {
+        save(
+          "soma_daily_goal",
+          dailyGoal
+        );
+
+        set({ dailyGoal });
+      },
+
+      /* =====================================================
+         TERM POINTS
+         ===================================================== */
+
+      addTermPoints: (
+        category,
+        amount
+      ) => {
+        if (
+          !Number.isFinite(amount) ||
+          amount <= 0
+        ) {
+          return 0;
+        }
+
+        const state = get();
+
+        const {
+          year,
+          term,
+        } =
+          getCurrentSchoolTerm();
+
+        const termKey =
+          `${year}-T${term}`;
+
+        const existing =
+          state.termPoints[
+          termKey
+          ] ??
+          createEmptyTermPoints(
+            year,
+            term
+          );
+
+        const categoryLimit =
+          TERM_POINT_LIMITS[
+          category
+          ];
+
+        const currentCategoryValue =
+          existing[category];
+
+        const currentTotal =
+          getTermPointsTotal(
+            existing
+          );
+
+        const availableOverall =
+          MAX_TERM_POINTS -
+          currentTotal;
+
+        if (
+          availableOverall <= 0
+        ) {
+          return 0;
+        }
+
+        const pointsToAdd =
+          Math.min(
+            amount,
+            categoryLimit -
+            currentCategoryValue,
+            availableOverall
+          );
+
+        if (
+          pointsToAdd <= 0
+        ) {
+          return 0;
+        }
+
+        const updatedTerm:
+          TermPoints = {
+          ...existing,
+
+          [category]:
+            currentCategoryValue +
+            pointsToAdd,
         };
-        const newTransactions = [newTransaction, ...state.transactions];
-        localStorage.setItem("soma_wallet", JSON.stringify(newWallet));
-        localStorage.setItem("soma_transactions", JSON.stringify(newTransactions));
-        return { wallet: newWallet, transactions: newTransactions };
-      });
-    },
-    purchaseMaterial: (id, amount) => {
-      const state = get();
-      if (state.wallet < amount) return false;
-      if (state.purchased.includes(id)) return true;
-      const newWallet = state.wallet - amount;
-      const newPurchased = [...state.purchased, id];
-      const newTransaction: Transaction = {
-        id: Math.random().toString(36).substring(7),
-        type: "purchase",
+
+        const termPoints = {
+          ...state.termPoints,
+
+          [termKey]:
+            updatedTerm,
+        };
+
+        save(
+          "soma_term_points",
+          termPoints
+        );
+
+        set({
+          termPoints,
+        });
+
+        const latestState = get();
+
+        void syncStudentPerformanceToBackend({
+          soma_hub_code:
+            latestState.somaHubCode,
+
+          term_points:
+            Object.values(
+              latestState.termPoints
+            ),
+
+          quiz_results:
+            latestState.quizResults,
+        });
+
+        return pointsToAdd;
+      },
+
+      /* =====================================================
+         STUDY NOTES TERM POINTS
+         ===================================================== */
+
+      completeStudyNotes: (
+        materialId
+      ) => {
+        if (!materialId) {
+          return 0;
+        }
+
+        const state = get();
+
+        const {
+          year,
+          term,
+        } =
+          getCurrentSchoolTerm();
+
+        const termKey =
+          `${year}-T${term}`;
+
+        const completedForTerm =
+          state.studyNotesCompleted[
+          termKey
+          ] ?? [];
+
+        if (
+          completedForTerm.includes(
+            materialId
+          )
+        ) {
+          return 0;
+        }
+
+        const pointsAwarded =
+          get().addTermPoints(
+            "studyNotes",
+            STUDY_NOTES_POINTS_PER_COMPLETION
+          );
+
+        const updatedCompletedForTerm =
+          [
+            ...completedForTerm,
+            materialId,
+          ];
+
+        const studyNotesCompleted = {
+          ...state.studyNotesCompleted,
+
+          [termKey]:
+            updatedCompletedForTerm,
+        };
+
+        save(
+          "soma_study_notes_completed",
+          studyNotesCompleted
+        );
+
+        set({
+          studyNotesCompleted,
+        });
+
+        const latestState = get();
+
+        void syncStudentPerformanceToBackend({
+          soma_hub_code:
+            latestState.somaHubCode,
+
+          term_points:
+            Object.values(
+              latestState.termPoints
+            ),
+
+          quiz_results:
+            latestState.quizResults,
+        });
+
+        return pointsAwarded;
+      },
+
+      /* =====================================================
+         WALLET
+         ===================================================== */
+
+      addFunds: (
         amount,
-        description: `Purchased material`,
-        date: new Date().toISOString(),
-      };
-      const newTransactions = [newTransaction, ...state.transactions];
-      localStorage.setItem("soma_wallet", JSON.stringify(newWallet));
-      localStorage.setItem("soma_purchased", JSON.stringify(newPurchased));
-      localStorage.setItem("soma_transactions", JSON.stringify(newTransactions));
-      set({ wallet: newWallet, purchased: newPurchased, transactions: newTransactions });
-      return true;
-    },
-    removePurchased: (id) => {
-      set((state) => {
-        const newPurchased = state.purchased.filter((p) => p !== id);
-        localStorage.setItem("soma_purchased", JSON.stringify(newPurchased));
-        return { purchased: newPurchased };
-      });
-    },
-    addQuizResult: (result) => {
-      set((state) => {
-        const newResult: QuizResult = {
-          ...result,
-          id: Math.random().toString(36).substring(7),
-          date: new Date().toISOString(),
+        description
+      ) => {
+        set((state) => {
+          const wallet =
+            state.wallet +
+            amount;
+
+          const transactions = [
+            {
+              id: Math.random()
+                .toString(36)
+                .slice(2, 9),
+
+              type:
+                "deposit" as const,
+
+              amount,
+
+              description,
+
+              date:
+                new Date().toISOString(),
+            },
+
+            ...state.transactions,
+          ].slice(0, 100);
+
+          save(
+            "soma_wallet",
+            wallet
+          );
+
+          save(
+            "soma_transactions",
+            transactions
+          );
+
+          return {
+            wallet,
+            transactions,
+          };
+        });
+      },
+
+      purchaseMaterial: (
+        id,
+        amount
+      ) => {
+        const state = get();
+
+        if (
+          state.purchased.includes(
+            id
+          )
+        ) {
+          return true;
+        }
+
+        if (
+          state.wallet < amount
+        ) {
+          return false;
+        }
+
+        const wallet =
+          state.wallet - amount;
+
+        const purchased = [
+          ...state.purchased,
+          id,
+        ];
+
+        const transactions = [
+          {
+            id: Math.random()
+              .toString(36)
+              .slice(2, 9),
+
+            type:
+              "purchase" as const,
+
+            amount,
+
+            description:
+              "Opened material",
+
+            date:
+              new Date().toISOString(),
+          },
+
+          ...state.transactions,
+        ].slice(0, 100);
+
+        save(
+          "soma_wallet",
+          wallet
+        );
+
+        save(
+          "soma_purchased",
+          purchased
+        );
+
+        save(
+          "soma_transactions",
+          transactions
+        );
+
+        set({
+          wallet,
+          purchased,
+          transactions,
+        });
+
+        return true;
+      },
+
+      removePurchased: (
+        id
+      ) => {
+        set((state) => {
+          const purchased =
+            state.purchased.filter(
+              (p) => p !== id
+            );
+
+          save(
+            "soma_purchased",
+            purchased
+          );
+
+          return {
+            purchased,
+          };
+        });
+      },
+
+      /* =====================================================
+         QUIZ RESULTS + REWARDS
+         ===================================================== */
+
+      addQuizResult: (
+        result
+      ) => {
+        const state = get();
+
+        const t = today();
+
+        /* -----------------------------------------------
+           STREAK
+           ----------------------------------------------- */
+
+        let streak: Streak = {
+          ...state.streak,
         };
-        const newResults = [newResult, ...state.quizResults].slice(0, 100);
-        localStorage.setItem("soma_quiz_results", JSON.stringify(newResults));
-        return { quizResults: newResults };
-      });
-    },
-    logout: () => {
-      KEYS.forEach((k) => localStorage.removeItem(k));
-      set({
-        name: null, avatar: null, grade: null,
-        wallet: 0, purchased: [], transactions: [], quizResults: [],
-      });
-    },
-  };
-});
+
+        const previousStreakCount =
+          state.streak.count;
+
+        if (
+          streak.lastActiveDate ===
+          t
+        ) {
+          // Already counted today.
+        } else if (
+          streak.lastActiveDate &&
+          daysBetween(
+            streak.lastActiveDate,
+            t
+          ) === 1
+        ) {
+          streak.count += 1;
+        } else {
+          streak.count = 1;
+        }
+
+        streak.best = Math.max(
+          streak.best,
+          streak.count
+        );
+
+        streak.lastActiveDate =
+          t;
+
+        /* -----------------------------------------------
+           COINS + XP
+           ----------------------------------------------- */
+
+        const base =
+          result.type === "exam"
+            ? COINS_PER_EXAM
+            : COINS_PER_TOPICAL;
+
+        const perfect =
+          result.percentage >= 100
+            ? PERFECT_BONUS
+            : 0;
+
+        const milestone =
+          streak.count >
+            previousStreakCount &&
+            streak.count % 7 === 0
+            ? STREAK_MILESTONE_BONUS
+            : 0;
+
+        const coinsEarned =
+          base +
+          perfect +
+          milestone;
+
+        const xpEarned =
+          Math.round(
+            result.percentage / 4
+          ) +
+          (result.type === "exam"
+            ? 15
+            : 8);
+
+        /* -----------------------------------------------
+           NEW QUIZ RESULT
+           ----------------------------------------------- */
+
+        const newResult:
+          QuizResult = {
+          ...result,
+
+          xpEarned,
+
+          coinsEarned,
+
+          id: Math.random()
+            .toString(36)
+            .slice(2, 9),
+
+          date:
+            new Date().toISOString(),
+        };
+
+        const quizResults = [
+          newResult,
+          ...state.quizResults,
+        ].slice(0, 200);
+
+        const wallet =
+          state.wallet +
+          coinsEarned;
+
+        const xp =
+          state.xp +
+          xpEarned;
+
+        const transactions = [
+          {
+            id: Math.random()
+              .toString(36)
+              .slice(2, 9),
+
+            type:
+              "reward" as const,
+
+            amount:
+              coinsEarned,
+
+            description:
+              milestone
+                ? `Quiz reward + ${streak.count}-day streak!`
+                : "Quiz reward",
+
+            date:
+              new Date().toISOString(),
+          },
+
+          ...state.transactions,
+        ].slice(0, 100);
+
+        /* =================================================
+           TERM LEARNING POINTS
+           ================================================= */
+
+        const {
+          year,
+          term,
+        } =
+          getCurrentSchoolTerm();
+
+        const termKey =
+          `${year}-T${term}`;
+
+        const existingTerm =
+          state.termPoints[
+          termKey
+          ] ??
+          createEmptyTermPoints(
+            year,
+            term
+          );
+
+        const termPoints = {
+          ...state.termPoints,
+        };
+
+        /* -----------------------------------------------
+           TOPICAL / EXAM POINTS
+           ----------------------------------------------- */
+
+        const category:
+          TermPointCategory =
+          result.type === "exam"
+            ? "exams"
+            : "topicalQuizzes";
+
+        const categoryLimit =
+          TERM_POINT_LIMITS[
+          category
+          ];
+
+        const currentCategory =
+          existingTerm[
+          category
+          ];
+
+        const currentTotal =
+          getTermPointsTotal(
+            existingTerm
+          );
+
+        const availableOverall =
+          MAX_TERM_POINTS -
+          currentTotal;
+
+        const requestedPoints =
+          result.type === "exam"
+            ? EXAM_TERM_POINTS
+            : TOPICAL_QUIZ_TERM_POINTS;
+
+        const pointsToAdd =
+          Math.max(
+            0,
+            Math.min(
+              requestedPoints,
+              categoryLimit -
+              currentCategory,
+              availableOverall
+            )
+          );
+
+        if (
+          pointsToAdd > 0
+        ) {
+          termPoints[
+            termKey
+          ] = {
+            ...existingTerm,
+
+            [category]:
+              currentCategory +
+              pointsToAdd,
+          };
+        } else if (
+          !termPoints[
+          termKey
+          ]
+        ) {
+          termPoints[
+            termKey
+          ] = existingTerm;
+        }
+
+        /* =================================================
+           CONSISTENCY POINTS
+           ================================================= */
+
+        const isNewStreakDay =
+          streak.lastActiveDate ===
+          t &&
+          streak.count >
+          previousStreakCount;
+
+        if (
+          isNewStreakDay
+        ) {
+          const updatedTerm =
+            termPoints[
+            termKey
+            ] ??
+            createEmptyTermPoints(
+              year,
+              term
+            );
+
+          const consistencyAvailable =
+            TERM_POINT_LIMITS
+              .consistency -
+            updatedTerm.consistency;
+
+          const overallAvailable =
+            MAX_TERM_POINTS -
+            getTermPointsTotal(
+              updatedTerm
+            );
+
+          const consistencyPoints =
+            Math.max(
+              0,
+              Math.min(
+                CONSISTENCY_TERM_POINTS,
+                consistencyAvailable,
+                overallAvailable
+              )
+            );
+
+          if (
+            consistencyPoints > 0
+          ) {
+            termPoints[
+              termKey
+            ] = {
+              ...updatedTerm,
+
+              consistency:
+                updatedTerm.consistency +
+                consistencyPoints,
+            };
+          }
+        }
+
+        /* =================================================
+           PROGRESS / IMPROVEMENT POINTS
+           ================================================= */
+
+        const previousTermResults =
+          state.quizResults.filter(
+            (previousResult) => {
+              const resultDate =
+                new Date(
+                  previousResult.date
+                );
+
+              const resultTerm =
+                getCurrentSchoolTerm(
+                  resultDate
+                );
+
+              return (
+                resultTerm.year ===
+                year &&
+                resultTerm.term ===
+                term
+              );
+            }
+          );
+
+        const previousPerformance =
+          previousTermResults.length >
+            0
+            ? previousTermResults[0]
+              .percentage
+            : null;
+
+        if (
+          previousPerformance !==
+          null &&
+          result.percentage >
+          previousPerformance
+        ) {
+          const improvement =
+            result.percentage -
+            previousPerformance;
+
+          const progressPointsEarned =
+            Math.floor(
+              improvement /
+              PROGRESS_PERCENTAGE_STEP
+            ) *
+            PROGRESS_POINTS_PER_STEP;
+
+          if (
+            progressPointsEarned > 0
+          ) {
+            const updatedTerm =
+              termPoints[
+              termKey
+              ] ??
+              createEmptyTermPoints(
+                year,
+                term
+              );
+
+            const progressAvailable =
+              TERM_POINT_LIMITS
+                .progress -
+              updatedTerm.progress;
+
+            const overallAvailable =
+              MAX_TERM_POINTS -
+              getTermPointsTotal(
+                updatedTerm
+              );
+
+            const progressPoints =
+              Math.max(
+                0,
+                Math.min(
+                  progressPointsEarned,
+                  progressAvailable,
+                  overallAvailable
+                )
+              );
+
+            if (
+              progressPoints > 0
+            ) {
+              termPoints[
+                termKey
+              ] = {
+                ...updatedTerm,
+
+                progress:
+                  updatedTerm.progress +
+                  progressPoints,
+              };
+            }
+          }
+        }
+
+        /* =================================================
+           SAVE EVERYTHING
+           ================================================= */
+
+        save(
+          "soma_quiz_results",
+          quizResults
+        );
+
+        save(
+          "soma_wallet",
+          wallet
+        );
+
+        save(
+          "soma_xp",
+          xp
+        );
+
+        save(
+          "soma_streak",
+          streak
+        );
+
+        save(
+          "soma_transactions",
+          transactions
+        );
+
+        save(
+          "soma_term_points",
+          termPoints
+        );
+
+        set({
+          quizResults,
+          wallet,
+          xp,
+          streak,
+          transactions,
+          termPoints,
+        });
+
+        const latestState = get();
+
+        void syncStudentPerformanceToBackend({
+          soma_hub_code:
+            latestState.somaHubCode,
+
+          term_points:
+            Object.values(
+              latestState.termPoints
+            ),
+
+          quiz_results:
+            latestState.quizResults,
+        });
+
+        return {
+          xpEarned,
+          coinsEarned,
+          streak,
+        };
+      },
+
+      /* =====================================================
+         QUIZ PROGRESS
+         ===================================================== */
+
+      saveQuizProgress: (
+        progress
+      ) => {
+        set((state) => {
+          const next = {
+            ...state.quizProgress,
+
+            [progress.materialId]: {
+              ...progress,
+
+              updatedAt:
+                new Date().toISOString(),
+            },
+          };
+
+          save(
+            "soma_quiz_progress",
+            next
+          );
+
+          return {
+            quizProgress: next,
+          };
+        });
+      },
+
+      clearQuizProgress: (
+        materialId
+      ) => {
+        set((state) => {
+          if (
+            !state.quizProgress[
+            materialId
+            ]
+          ) {
+            return state;
+          }
+
+          const next = {
+            ...state.quizProgress,
+          };
+
+          delete next[
+            materialId
+          ];
+
+          save(
+            "soma_quiz_progress",
+            next
+          );
+
+          return {
+            quizProgress: next,
+          };
+        });
+      },
+
+      /* =====================================================
+         LOGOUT
+         ===================================================== */
+
+      logout: () => {
+        KEYS.forEach(
+          (key) => {
+            try {
+              localStorage.removeItem(
+                key
+              );
+            } catch {
+              /* noop */
+            }
+          }
+        );
+
+        set({
+          name: null,
+          avatar: null,
+          grade: null,
+          schoolName: null,
+
+          somaHubCode:
+            generateSomaHubCode(),
+
+          studyIntent: null,
+          pathway: null,
+          activeGrade: null,
+
+          wallet: 100,
+          xp: 0,
+
+          streak: {
+            ...EMPTY_STREAK,
+          },
+
+          dailyGoal: 2,
+
+          purchased: [],
+          transactions: [],
+          quizResults: [],
+          quizProgress: {},
+
+          termPoints: {},
+
+          studyNotesCompleted: {},
+        });
+      },
+    };
+  });
+
+/* =========================================================
+   INITIAL STUDENT BACKEND SYNC
+   ========================================================= */
+
+setTimeout(() => {
+  const state =
+    useSomaStore.getState();
+
+  if (!state.name) {
+    return;
+  }
+
+  void syncStudentToBackend({
+    soma_hub_code:
+      state.somaHubCode,
+
+    name:
+      state.name,
+
+    school_name:
+      state.schoolName ?? "",
+
+    grade:
+      state.grade ?? "",
+  });
+
+  void syncStudentPerformanceToBackend({
+    soma_hub_code:
+      state.somaHubCode,
+
+    term_points:
+      Object.values(
+        state.termPoints
+      ),
+
+    quiz_results:
+      state.quizResults,
+  });
+}, 0);
