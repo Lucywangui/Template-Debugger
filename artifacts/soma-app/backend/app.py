@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime, timedelta
 from werkzeug.security import check_password_hash
 
-from coins import create_coins_blueprint
+from coins import create_coins_blueprint, is_valid_purpose
 import database
 
 # ============================================================
@@ -86,6 +86,9 @@ if MPESA_ENVIRONMENT == "production":
     MPESA_BASE_URL = "https://api.safaricom.co.ke"
 else:
     MPESA_BASE_URL = "https://sandbox.safaricom.co.ke"
+
+# Lets local tests point at a stand-in for Safaricom's API.
+MPESA_BASE_URL = os.getenv("MPESA_BASE_URL", MPESA_BASE_URL).rstrip("/")
 
 
 # ============================================================
@@ -690,6 +693,16 @@ def create_payment_session():
     phone_number = data.get("phone_number")
     amount = data.get("amount")
 
+    # What to do once the money arrives: "subscribe",
+    # "unlock:<material_id>", or nothing for a plain top-up.
+    purpose = data.get("purpose")
+
+    if not is_valid_purpose(purpose):
+        return jsonify({
+            "success": False,
+            "message": "Invalid payment purpose"
+        }), 400
+
     # --------------------------------------------------------
     # Validate SOMA HUB code
     # --------------------------------------------------------
@@ -802,9 +815,10 @@ def create_payment_session():
                 amount,
                 status,
                 created_at,
-                expires_at
+                expires_at,
+                purpose
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 session_id,
@@ -814,6 +828,7 @@ def create_payment_session():
                 "pending",
                 created_at,
                 expires_at,
+                purpose,
             ),
         )
 
@@ -926,12 +941,24 @@ def create_payment_session():
 
             conn.commit()
 
+            # Safaricom explains rejections in errorMessage (e.g. a
+            # request already waiting on the phone); pass it on.
+            mpesa_message = (
+                result.get("errorMessage")
+                or result.get("ResponseDescription")
+                or result.get("CustomerMessage")
+            )
+
             return jsonify({
                 "success": False,
-                "message": "M-Pesa STK Push could not be sent",
+                "message": (
+                    f"M-Pesa couldn't send the request: {mpesa_message}"
+                    if mpesa_message
+                    else "M-Pesa STK Push could not be sent"
+                ),
                 "mpesa_response": result,
                 "session_id": session_id,
-            }), 500
+            }), 502
 
         # ----------------------------------------------------
         # Save M-Pesa request IDs
@@ -1481,6 +1508,10 @@ def mpesa_callback():
                 print("------------------------------------------------------------")
                 print("============================================================")
 
+                # Separate transaction: the credit above stands
+                # even if this fails.
+                coins_bp.fulfil_payment_purpose(session_id)
+
                 return jsonify({
                     "ResultCode": 0,
                     "ResultDesc": "Accepted"
@@ -1659,6 +1690,25 @@ def payment_status(session_id):
                 (session_id,),
             ).fetchone()
 
+        # Retry the purpose if the callback credited the wallet
+        # but didn't get to finish it.
+        if (
+            payment_session["status"] == "completed"
+            and payment_session["purpose"]
+            and not payment_session["purpose_result"]
+        ):
+            coins_bp.fulfil_payment_purpose(session_id)
+
+            payment_session = conn.execute(
+                """
+                SELECT *
+                FROM payment_sessions
+                WHERE session_id = ?
+                LIMIT 1
+                """,
+                (session_id,),
+            ).fetchone()
+
         wallet_balance = calculate_wallet_balance(
             conn,
             soma_hub_code
@@ -1696,6 +1746,8 @@ def payment_status(session_id):
             ],
             "created_at": payment_session["created_at"],
             "expires_at": payment_session["expires_at"],
+            "purpose": payment_session["purpose"],
+            "purpose_result": payment_session["purpose_result"],
             "completed_at": payment_session["completed_at"],
             "wallet_balance": wallet_balance,
             "transaction": (
@@ -1926,7 +1978,10 @@ def dev_test_payment(session_id):
         print("Wallet balance:", balance)
         print("============================================")
 
+        purpose_result = coins_bp.fulfil_payment_purpose(session_id)
+
         return jsonify({
+            "purpose_result": purpose_result,
             "success": True,
             "message": "Development test payment completed",
             "session_id": session_id,
@@ -2069,14 +2124,14 @@ def legacy_stk_push():
 # COINS AND UNLOCKS
 # ============================================================
 
-app.register_blueprint(
-    create_coins_blueprint(
-        get_db=get_db,
-        now_string=now_string,
-        calculate_wallet_balance=calculate_wallet_balance,
-        is_sandbox=lambda: MPESA_ENVIRONMENT == "sandbox",
-    )
+coins_bp = create_coins_blueprint(
+    get_db=get_db,
+    now_string=now_string,
+    calculate_wallet_balance=calculate_wallet_balance,
+    is_sandbox=lambda: MPESA_ENVIRONMENT == "sandbox",
 )
+
+app.register_blueprint(coins_bp)
 
 
 if __name__ == "__main__":

@@ -19,8 +19,19 @@ export type PaymentStatus =
   | "failed"
   | "expired";
 
+/**
+ * What the server does once the money arrives. Without one, the
+ * payment just tops up the wallet.
+ */
+export type PaymentPurpose = "subscribe" | `unlock:${string}`;
+
 export type PollOutcome =
-  | { status: "completed"; walletBalance: number }
+  | {
+      status: "completed";
+      walletBalance: number;
+      /** "done", "failed: <reason>", or null for a plain top-up. */
+      purposeResult: string | null;
+    }
   | { status: "failed" | "expired" }
   | { status: "timeout" }
   | { status: "aborted" };
@@ -52,7 +63,8 @@ export function isValidTopUpAmount(amount: number): boolean {
  */
 export async function startTopUp(
   phoneNumber: string,
-  amount: number
+  amount: number,
+  purpose?: PaymentPurpose
 ): Promise<{ sessionId: string }> {
   const send = () =>
     request<{ session_id: string }>(
@@ -63,6 +75,7 @@ export async function startTopUp(
           soma_hub_code: currentStudent().soma_hub_code,
           phone_number: phoneNumber,
           amount,
+          purpose,
         }),
       }
     );
@@ -87,10 +100,15 @@ export async function startTopUp(
 
 export async function getPaymentStatus(
   sessionId: string
-): Promise<{ status: PaymentStatus; walletBalance: number }> {
+): Promise<{
+  status: PaymentStatus;
+  walletBalance: number;
+  purposeResult: string | null;
+}> {
   const result = await request<{
     status: PaymentStatus;
     wallet_balance: number;
+    purpose_result?: string | null;
   }>(
     `/api/mpesa/payment-status/${encodeURIComponent(sessionId)}`
   );
@@ -98,6 +116,7 @@ export async function getPaymentStatus(
   return {
     status: result.status,
     walletBalance: result.wallet_balance,
+    purposeResult: result.purpose_result ?? null,
   };
 }
 
@@ -155,6 +174,7 @@ export async function pollPaymentStatus(
         return {
           status: "completed",
           walletBalance: result.walletBalance,
+          purposeResult: result.purposeResult,
         };
       }
 

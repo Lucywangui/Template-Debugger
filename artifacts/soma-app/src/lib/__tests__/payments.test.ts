@@ -27,7 +27,7 @@ function statuses(...sequence: (PaymentStatus | Error)[]) {
   return vi.fn(async () => {
     const next = sequence[Math.min(i++, sequence.length - 1)];
     if (next instanceof Error) throw next;
-    return { status: next, walletBalance: 70 };
+    return { status: next, walletBalance: 70, purposeResult: null };
   });
 }
 
@@ -61,7 +61,7 @@ describe("pollPaymentStatus", () => {
 
     const outcome = await pollPaymentStatus("S1", { fetchStatus, ...fakeClock() });
 
-    expect(outcome).toEqual({ status: "completed", walletBalance: 70 });
+    expect(outcome).toEqual({ status: "completed", walletBalance: 70, purposeResult: null });
     expect(fetchStatus).toHaveBeenCalledTimes(3);
   });
 
@@ -112,6 +112,16 @@ describe("pollPaymentStatus", () => {
 });
 
 describe("startTopUp", () => {
+  it("sends the purpose when given", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse(200, { success: true, session_id: "S1" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await startTopUp("0712345678", 100, "subscribe");
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string).purpose).toBe("subscribe");
+  });
+
   beforeEach(() => {
     syncStudentToBackend.mockReset();
     vi.unstubAllGlobals();

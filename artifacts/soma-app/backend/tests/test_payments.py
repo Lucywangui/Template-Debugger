@@ -171,3 +171,22 @@ def test_dev_test_payment_credits_wallet(client, stk_ok, monkeypatch):
     assert response.status_code == 200
     assert status(client, session_id)["status"] == "completed"
     assert balance(client) == 20
+
+
+def test_safaricom_rejection_message_is_passed_on(client, monkeypatch):
+    def rejecting_post(url, json=None, headers=None, timeout=None):
+        response = MagicMock()
+        response.status_code = 500
+        response.text = ""
+        response.json.return_value = {
+            "errorCode": "500.001.1001",
+            "errorMessage": "Unable to lock subscriber, a transaction is already in process for the current subscriber",
+        }
+        return response
+
+    monkeypatch.setattr(soma_app.requests, "post", rejecting_post)
+
+    response = start_session(client, 50)
+
+    assert response.status_code == 502
+    assert "already in process" in response.get_json()["message"]

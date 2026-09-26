@@ -274,9 +274,46 @@ def init_database():
 
         /*
         ============================================================
+        SUBSCRIPTIONS
+        ============================================================
+
+        Paid access to every material in one grade until expires_at.
+        ============================================================
+        */
+
+        CREATE TABLE IF NOT EXISTS subscriptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            student_id INTEGER NOT NULL,
+
+            soma_hub_code TEXT NOT NULL,
+
+            grade_key TEXT NOT NULL,
+
+            starts_at TEXT NOT NULL,
+
+            expires_at TEXT NOT NULL,
+
+            ksh_paid INTEGER NOT NULL,
+
+            reference TEXT NOT NULL UNIQUE,
+
+            created_at TEXT NOT NULL,
+
+            FOREIGN KEY (student_id)
+                REFERENCES students(id)
+                ON DELETE CASCADE
+        );
+
+
+        /*
+        ============================================================
         INDEXES
         ============================================================
         */
+
+        CREATE INDEX IF NOT EXISTS idx_subscriptions_soma_code
+        ON subscriptions(soma_hub_code);
 
         CREATE INDEX IF NOT EXISTS idx_coin_transactions_soma_code
         ON coin_transactions(soma_hub_code);
@@ -316,8 +353,25 @@ def init_database():
         """
     )
 
+    # Columns added after the first release. CREATE TABLE IF NOT
+    # EXISTS leaves old tables alone, so add them here.
+    add_missing_column(connection, "payment_sessions", "purpose", "TEXT")
+    add_missing_column(connection, "payment_sessions", "purpose_result", "TEXT")
+
     connection.commit()
     connection.close()
+
+
+def add_missing_column(connection, table, column, declaration):
+    columns = {
+        row["name"]
+        for row in connection.execute(f"PRAGMA table_info({table})")
+    }
+
+    if column not in columns:
+        connection.execute(
+            f"ALTER TABLE {table} ADD COLUMN {column} {declaration}"
+        )
 
 
 if __name__ == "__main__":

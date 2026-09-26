@@ -30,19 +30,45 @@ export interface ServerAccount {
   earnedToday: number;
   imported: boolean;
   prices: Prices;
+  subscription: Subscription | null;
 }
 
 export interface Prices {
   materialCoins: number;
   kshPerCoin: number;
   dailyCap: number;
+  subscriptionKsh: number;
+  subscriptionDays: number;
+}
+
+export interface Subscription {
+  gradeKey: string;
+  /** Server local time, "YYYY-MM-DD HH:MM:SS". */
+  expiresAt: string;
+  active: boolean;
 }
 
 const DEFAULT_PRICES: Prices = {
   materialCoins: 5,
   kshPerCoin: 1,
   dailyCap: 200,
+  subscriptionKsh: 100,
+  subscriptionDays: 30,
 };
+
+/** Material IDs start with their grade key, e.g. cbc-7-english-... */
+export function subscriptionCovers(
+  subscription: Subscription | null,
+  materialId: string
+): boolean {
+  return (
+    !!subscription &&
+    subscription.active &&
+    materialId.startsWith(
+      subscription.gradeKey + "-"
+    )
+  );
+}
 
 export interface QuizResult {
   id: string;
@@ -481,6 +507,7 @@ interface SomaState {
   /** M-Pesa wallet in KSh; null until the server has answered. */
   ksh: number | null;
   prices: Prices;
+  subscription: Subscription | null;
   xp: number;
   streak: Streak;
   dailyGoal: number;
@@ -580,6 +607,7 @@ const KEYS = [
   "soma_purchased",
   "soma_library_hidden",
   "soma_ksh",
+  "soma_subscription",
   "soma_reward_outbox",
   "soma_transactions",
   "soma_quiz_results",
@@ -713,6 +741,11 @@ export const useSomaStore =
       ),
 
       prices: DEFAULT_PRICES,
+
+      subscription: loadState<Subscription | null>(
+        "soma_subscription",
+        null
+      ),
 
       xp: loadState<number>(
         "soma_xp",
@@ -1135,6 +1168,10 @@ export const useSomaStore =
 
           save("soma_wallet", account.coins);
           save("soma_ksh", account.ksh);
+          save(
+            "soma_subscription",
+            account.subscription
+          );
           save("soma_purchased", purchased);
           save(
             "soma_library_hidden",
@@ -1145,6 +1182,7 @@ export const useSomaStore =
             wallet: account.coins,
             ksh: account.ksh,
             prices: account.prices,
+            subscription: account.subscription,
             purchased,
             libraryHidden,
           };
@@ -1763,6 +1801,7 @@ export const useSomaStore =
           wallet: 100,
           ksh: null,
           prices: DEFAULT_PRICES,
+          subscription: null,
           xp: 0,
 
           streak: {

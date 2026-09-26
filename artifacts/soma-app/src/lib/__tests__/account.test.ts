@@ -25,7 +25,9 @@ import {
   claimReward,
   flushRewards,
   loadOutbox,
+  subscribeFromWallet,
   syncAccount,
+  toServerAccount,
   unlockMaterial,
 } from "@/lib/account";
 
@@ -230,5 +232,43 @@ describe("syncAccount", () => {
     await syncAccount();
 
     expect(sentBodies(fetchMock).map((c) => c.url)).toEqual(["/api/account/SH-ABC123"]);
+  });
+});
+
+describe("subscriptions", () => {
+  it("maps the subscription and its prices", () => {
+    const account = toServerAccount({
+      ...ACCOUNT,
+      prices: { ...ACCOUNT.prices, subscription_ksh: 100, subscription_days: 30 },
+      subscription: { grade_key: "cbc-7", expires_at: "2026-10-26 12:00:00", active: true },
+    });
+
+    expect(account.subscription).toEqual({ gradeKey: "cbc-7", expiresAt: "2026-10-26 12:00:00", active: true });
+    expect(account.prices.subscriptionKsh).toBe(100);
+    expect(account.prices.subscriptionDays).toBe(30);
+  });
+
+  it("maps no subscription to null", () => {
+    expect(toServerAccount({ ...ACCOUNT, subscription: null } as never).subscription).toBeNull();
+  });
+
+  it("subscribes from the wallet", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse(200, ACCOUNT));
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await subscribeFromWallet("req-1")).toEqual({ status: "subscribed" });
+    expect(sentBodies(fetchMock)[0]).toEqual({
+      url: "/api/subscriptions",
+      body: { soma_hub_code: "SH-ABC123", request_id: "req-1" },
+    });
+  });
+
+  it("reports how much KSh is missing", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse(402, { success: false, ksh: 40, ksh_needed: 60 })),
+    );
+
+    expect(await subscribeFromWallet()).toEqual({ status: "short", ksh: 40, kshNeeded: 60 });
   });
 });

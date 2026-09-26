@@ -4,6 +4,7 @@ import {
   useSomaStore,
   getCurrentSchoolTerm,
   getTermPointsTotal,
+  subscriptionCovers,
 } from "@/lib/storage";
 import { MATERIALS, SUBJECTS_BY_GRADE } from "@/data/materials";
 import {
@@ -33,6 +34,7 @@ import { SubjectFilter } from "@/components/SubjectFilter";
 import { AddFundsModal } from "@/components/AddFundsModal";
 import { UnlockDialog, type UnlockPrompt } from "@/components/UnlockDialog";
 import { unlockMaterial } from "@/lib/account";
+import { formatExpiry, renewBanner } from "@/lib/subscription";
 import { useToast } from "@/hooks/use-toast";
 import {
   requestAndEnableNotifications,
@@ -124,6 +126,7 @@ export function DashboardPage({ onOpenViewer, onChangeGrade, onLogout }: Props) 
     setActiveGrade,
     wallet,
     ksh,
+    subscription,
     xp,
     streak,
     dailyGoal,
@@ -315,7 +318,7 @@ export function DashboardPage({ onOpenViewer, onChangeGrade, onLogout }: Props) 
     if (result.status === "unlocked") {
       setUnlockPrompt(null);
 
-      if (!result.alreadyUnlocked) {
+      if (!result.alreadyUnlocked && !result.viaSubscription) {
         toast({
           title: "Opened",
           description:
@@ -351,11 +354,17 @@ export function DashboardPage({ onOpenViewer, onChangeGrade, onLogout }: Props) 
     });
   };
 
+  /** Unlocked with coins, or covered by an active subscription. */
+  const canOpen = (id: string) =>
+    purchased.includes(id) || subscriptionCovers(subscription, id);
+
+  const banner = renewBanner(subscription);
+
   const handleBuy = (id: string) =>
     unlock(id, { openAfter: false, allowKsh: false });
 
   const openOrBuy = (id: string) => {
-    if (purchased.includes(id)) {
+    if (canOpen(id)) {
       onOpenViewer(id);
       return;
     }
@@ -581,6 +590,27 @@ export function DashboardPage({ onOpenViewer, onChangeGrade, onLogout }: Props) 
         {/* ── TODAY ── */}
         {activeTab === "home" && (
           <div className="max-w-2xl mx-auto px-4 pt-5 space-y-4">
+            {banner && subscription && (
+              <div
+                className="rounded-2xl border px-4 py-3 flex items-center gap-3 bg-card"
+                data-testid="renew-banner"
+              >
+                <span className="text-2xl">⏰</span>
+                <p className="text-sm flex-1">
+                  {banner.kind === "ending"
+                    ? `Your ${gradeShortName(subscription.gradeKey)} subscription ends on ${formatExpiry(subscription.expiresAt)}.`
+                    : `Your ${gradeShortName(subscription.gradeKey)} subscription has ended.`}
+                </p>
+                <Button
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => setIsAddFundsOpen(true)}
+                >
+                  Renew
+                </Button>
+              </div>
+            )}
+
             {/* Greeting + level */}
             <motion.div
               className="rounded-3xl p-5 text-white shadow-xl"
@@ -1150,9 +1180,7 @@ export function DashboardPage({ onOpenViewer, onChangeGrade, onLogout }: Props) 
                     <MaterialCard
                       key={m.id}
                       material={m}
-                      isPurchased={purchased.includes(
-                        m.id,
-                      )}
+                      isPurchased={canOpen(m.id)}
                       onBuy={() =>
                         handleBuy(m.id)
                       }
@@ -1670,6 +1698,11 @@ export function DashboardPage({ onOpenViewer, onChangeGrade, onLogout }: Props) 
             allowKsh: true,
           })
         }
+        onUnlocked={(id) => {
+          setUnlockPrompt(null);
+          toast({ title: "Opened", description: "Enjoy your material." });
+          onOpenViewer(id);
+        }}
         onTopUp={() => {
           setUnlockPrompt(null);
           setIsAddFundsOpen(true);

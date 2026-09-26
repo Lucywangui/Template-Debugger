@@ -26,7 +26,14 @@ interface AccountResponse {
     material_coins: number;
     ksh_per_coin: number;
     daily_cap: number;
+    subscription_ksh: number;
+    subscription_days: number;
   };
+  subscription: {
+    grade_key: string;
+    expires_at: string;
+    active: boolean;
+  } | null;
 }
 
 export function toServerAccount(
@@ -42,7 +49,16 @@ export function toServerAccount(
       materialCoins: response.prices.material_coins,
       kshPerCoin: response.prices.ksh_per_coin,
       dailyCap: response.prices.daily_cap,
+      subscriptionKsh: response.prices.subscription_ksh,
+      subscriptionDays: response.prices.subscription_days,
     },
+    subscription: response.subscription
+      ? {
+          gradeKey: response.subscription.grade_key,
+          expiresAt: response.subscription.expires_at,
+          active: response.subscription.active,
+        }
+      : null,
   };
 }
 
@@ -145,6 +161,7 @@ export type UnlockResult =
       coinsSpent: number;
       kshSpent: number;
       alreadyUnlocked: boolean;
+      viaSubscription: boolean;
     }
   | {
       status: "short";
@@ -172,6 +189,7 @@ export async function unlockMaterial(
           coins_spent: number;
           ksh_spent: number;
           already_unlocked: boolean;
+          via_subscription: boolean;
         }
       >("/api/unlocks", {
         soma_hub_code: student().soma_hub_code,
@@ -188,6 +206,7 @@ export async function unlockMaterial(
       coinsSpent: response.coins_spent,
       kshSpent: response.ksh_spent,
       alreadyUnlocked: response.already_unlocked,
+      viaSubscription: response.via_subscription,
     };
   } catch (error) {
     if (
@@ -234,6 +253,51 @@ export async function buyCoins(
   );
 
   apply(response);
+}
+
+/* ---------------------------------------------------------
+   Subscriptions
+   --------------------------------------------------------- */
+
+export type SubscribeResult =
+  | { status: "subscribed" }
+  | { status: "short"; ksh: number; kshNeeded: number }
+  | { status: "error"; message: string };
+
+/** Pays for the grade subscription from the KSh wallet. */
+export async function subscribeFromWallet(
+  requestId = newRequestId()
+): Promise<SubscribeResult> {
+  try {
+    const response = await withRegistration(() =>
+      postJson<AccountResponse>("/api/subscriptions", {
+        soma_hub_code: student().soma_hub_code,
+        request_id: requestId,
+      })
+    );
+
+    apply(response);
+    return { status: "subscribed" };
+  } catch (error) {
+    if (
+      error instanceof ApiError &&
+      error.httpStatus === 402
+    ) {
+      return {
+        status: "short",
+        ksh: Number(error.body.ksh),
+        kshNeeded: Number(error.body.ksh_needed),
+      };
+    }
+
+    return {
+      status: "error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Couldn't start the subscription.",
+    };
+  }
 }
 
 /** Sandbox only: adds 100 coins for testing. */
