@@ -1,9 +1,12 @@
+import os
 import sqlite3
 from pathlib import Path
 
 
 # Database file will be created in this backend folder
-DATABASE_PATH = Path(__file__).parent / "soma_hub.db"
+DATABASE_PATH = Path(
+    os.getenv("SOMA_DB_PATH", Path(__file__).parent / "soma_hub.db")
+)
 
 
 def get_connection():
@@ -206,9 +209,117 @@ def init_database():
 
         /*
         ============================================================
+        COIN TRANSACTIONS
+        ============================================================
+
+        Ledger for SOMA Coins. Positive amounts add coins, negative
+        amounts spend them. The balance is the sum of amount.
+
+        reference is unique so the same event (a quiz attempt, an
+        unlock, a coin purchase) can never be recorded twice.
+        ============================================================
+        */
+
+        CREATE TABLE IF NOT EXISTS coin_transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            student_id INTEGER NOT NULL,
+
+            soma_hub_code TEXT NOT NULL,
+
+            amount INTEGER NOT NULL,
+
+            transaction_type TEXT NOT NULL,
+
+            reference TEXT NOT NULL UNIQUE,
+
+            description TEXT,
+
+            created_at TEXT NOT NULL,
+
+            FOREIGN KEY (student_id)
+                REFERENCES students(id)
+                ON DELETE CASCADE
+        );
+
+
+        /*
+        ============================================================
+        MATERIAL UNLOCKS
+        ============================================================
+        */
+
+        CREATE TABLE IF NOT EXISTS material_unlocks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            student_id INTEGER NOT NULL,
+
+            soma_hub_code TEXT NOT NULL,
+
+            material_id TEXT NOT NULL,
+
+            coins_spent INTEGER NOT NULL DEFAULT 0,
+
+            ksh_spent INTEGER NOT NULL DEFAULT 0,
+
+            created_at TEXT NOT NULL,
+
+            UNIQUE (student_id, material_id),
+
+            FOREIGN KEY (student_id)
+                REFERENCES students(id)
+                ON DELETE CASCADE
+        );
+
+
+        /*
+        ============================================================
+        SUBSCRIPTIONS
+        ============================================================
+
+        Paid access to every material in one grade until expires_at.
+        ============================================================
+        */
+
+        CREATE TABLE IF NOT EXISTS subscriptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            student_id INTEGER NOT NULL,
+
+            soma_hub_code TEXT NOT NULL,
+
+            grade_key TEXT NOT NULL,
+
+            starts_at TEXT NOT NULL,
+
+            expires_at TEXT NOT NULL,
+
+            ksh_paid INTEGER NOT NULL,
+
+            reference TEXT NOT NULL UNIQUE,
+
+            created_at TEXT NOT NULL,
+
+            FOREIGN KEY (student_id)
+                REFERENCES students(id)
+                ON DELETE CASCADE
+        );
+
+
+        /*
+        ============================================================
         INDEXES
         ============================================================
         */
+
+        CREATE INDEX IF NOT EXISTS idx_subscriptions_soma_code
+        ON subscriptions(soma_hub_code);
+
+        CREATE INDEX IF NOT EXISTS idx_coin_transactions_soma_code
+        ON coin_transactions(soma_hub_code);
+
+        CREATE INDEX IF NOT EXISTS idx_material_unlocks_soma_code
+        ON material_unlocks(soma_hub_code);
 
         CREATE INDEX IF NOT EXISTS idx_students_soma_hub_code
         ON students(soma_hub_code);
@@ -242,8 +353,25 @@ def init_database():
         """
     )
 
+    # Columns added after the first release. CREATE TABLE IF NOT
+    # EXISTS leaves old tables alone, so add them here.
+    add_missing_column(connection, "payment_sessions", "purpose", "TEXT")
+    add_missing_column(connection, "payment_sessions", "purpose_result", "TEXT")
+
     connection.commit()
     connection.close()
+
+
+def add_missing_column(connection, table, column, declaration):
+    columns = {
+        row["name"]
+        for row in connection.execute(f"PRAGMA table_info({table})")
+    }
+
+    if column not in columns:
+        connection.execute(
+            f"ALTER TABLE {table} ADD COLUMN {column} {declaration}"
+        )
 
 
 if __name__ == "__main__":

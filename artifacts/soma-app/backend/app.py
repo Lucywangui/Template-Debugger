@@ -4,10 +4,14 @@ from dotenv import load_dotenv
 import requests
 import base64
 import os
+import re
 import sqlite3
 import uuid
 from datetime import datetime, timedelta
 from werkzeug.security import check_password_hash
+
+from coins import create_coins_blueprint, is_valid_purpose
+import database
 
 # ============================================================
 # LOAD ENVIRONMENT
@@ -19,6 +23,14 @@ app = Flask(__name__)
 
 app.secret_key = os.getenv("SOMA_SECRET_KEY", "change-this-secret-key")
 
+# Extra origins (deployed site, Capacitor app) come from
+# SOMA_CORS_ORIGINS as a comma-separated list.
+EXTRA_CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("SOMA_CORS_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
 CORS(
     app,
     supports_credentials=True,
@@ -26,6 +38,7 @@ CORS(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://10.48.151.52:5173",
+        *EXTRA_CORS_ORIGINS,
     ],
 )
 
@@ -34,7 +47,10 @@ CORS(
 # ============================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "soma_hub.db")
+DB_PATH = os.getenv(
+    "SOMA_DB_PATH",
+    os.path.join(BASE_DIR, "soma_hub.db"),
+)
 
 
 def get_db():
@@ -61,10 +77,18 @@ MPESA_CALLBACK_URL = os.getenv(
 
 MPESA_ENVIRONMENT = os.getenv("MPESA_ENVIRONMENT", "sandbox").lower()
 
+SOMA_HUB_CODE_PATTERN = re.compile(r"[A-Z0-9-]{3,32}")
+
+MIN_TOPUP_AMOUNT = 1
+MAX_TOPUP_AMOUNT = 150000
+
 if MPESA_ENVIRONMENT == "production":
     MPESA_BASE_URL = "https://api.safaricom.co.ke"
 else:
     MPESA_BASE_URL = "https://sandbox.safaricom.co.ke"
+
+# Lets local tests point at a stand-in for Safaricom's API.
+MPESA_BASE_URL = os.getenv("MPESA_BASE_URL", MPESA_BASE_URL).rstrip("/")
 
 
 # ============================================================
@@ -237,13 +261,28 @@ def register_student():
             "message": "Grade is required"
         }), 400
 
-    # Generate SOMA HUB code
-    soma_hub_code = "SH-" + uuid.uuid4().hex[:8].upper()
+    # The app creates its own SOMA HUB code and syncs it here
+    # repeatedly, so keep that code and update the existing
+    # student. Only generate one when the client sends none.
+    soma_hub_code = str(
+        data.get("soma_hub_code", "")
+    ).strip().upper()
+
+    if soma_hub_code and not SOMA_HUB_CODE_PATTERN.fullmatch(
+        soma_hub_code
+    ):
+        return jsonify({
+            "success": False,
+            "message": "Invalid SOMA HUB code"
+        }), 400
+
+    if not soma_hub_code:
+        soma_hub_code = "SH-" + uuid.uuid4().hex[:8].upper()
 
     conn = get_db()
 
     try:
-        cursor = conn.execute(
+        conn.execute(
             """
             INSERT INTO students (
                 soma_hub_code,
@@ -254,6 +293,11 @@ def register_student():
                 updated_at
             )
             VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(soma_hub_code) DO UPDATE SET
+                name = excluded.name,
+                school_name = excluded.school_name,
+                grade = excluded.grade,
+                updated_at = excluded.updated_at
             """,
             (
                 soma_hub_code,
@@ -267,7 +311,10 @@ def register_student():
 
         conn.commit()
 
-        student_id = cursor.lastrowid
+        student_id = conn.execute(
+            "SELECT id FROM students WHERE soma_hub_code = ?",
+            (soma_hub_code,),
+        ).fetchone()["id"]
 
         return jsonify({
             "success": True,
@@ -646,6 +693,16 @@ def create_payment_session():
     phone_number = data.get("phone_number")
     amount = data.get("amount")
 
+    # What to do once the money arrives: "subscribe",
+    # "unlock:<material_id>", or nothing for a plain top-up.
+    purpose = data.get("purpose")
+
+    if not is_valid_purpose(purpose):
+        return jsonify({
+            "success": False,
+            "message": "Invalid payment purpose"
+        }), 400
+
     # --------------------------------------------------------
     # Validate SOMA HUB code
     # --------------------------------------------------------
@@ -660,6 +717,9 @@ def create_payment_session():
     # Validate amount
     # --------------------------------------------------------
 
+    # M-Pesa only charges whole shillings. Accepting 10.5 here
+    # would send 10 to Safaricom and the callback amount check
+    # would then reject the payment.
     try:
         amount = float(amount)
     except (TypeError, ValueError):
@@ -668,10 +728,21 @@ def create_payment_session():
             "message": "A valid amount is required"
         }), 400
 
-    if amount <= 0:
+    if not amount.is_integer():
         return jsonify({
             "success": False,
-            "message": "Amount must be greater than zero"
+            "message": "Amount must be a whole number of shillings"
+        }), 400
+
+    amount = int(amount)
+
+    if amount < MIN_TOPUP_AMOUNT or amount > MAX_TOPUP_AMOUNT:
+        return jsonify({
+            "success": False,
+            "message": (
+                f"Amount must be between KSh {MIN_TOPUP_AMOUNT} "
+                f"and KSh {MAX_TOPUP_AMOUNT:,}"
+            )
         }), 400
 
     # --------------------------------------------------------
@@ -744,9 +815,10 @@ def create_payment_session():
                 amount,
                 status,
                 created_at,
-                expires_at
+                expires_at,
+                purpose
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 session_id,
@@ -756,6 +828,7 @@ def create_payment_session():
                 "pending",
                 created_at,
                 expires_at,
+                purpose,
             ),
         )
 
@@ -868,12 +941,24 @@ def create_payment_session():
 
             conn.commit()
 
+            # Safaricom explains rejections in errorMessage (e.g. a
+            # request already waiting on the phone); pass it on.
+            mpesa_message = (
+                result.get("errorMessage")
+                or result.get("ResponseDescription")
+                or result.get("CustomerMessage")
+            )
+
             return jsonify({
                 "success": False,
-                "message": "M-Pesa STK Push could not be sent",
+                "message": (
+                    f"M-Pesa couldn't send the request: {mpesa_message}"
+                    if mpesa_message
+                    else "M-Pesa STK Push could not be sent"
+                ),
                 "mpesa_response": result,
                 "session_id": session_id,
-            }), 500
+            }), 502
 
         # ----------------------------------------------------
         # Save M-Pesa request IDs
@@ -1242,7 +1327,7 @@ def mpesa_callback():
                     # make sure the session is completed.
                     if (
                         existing_transaction["payment_session_id"]
-                        == payment_session["id"]
+                        == payment_session["session_id"]
                     ):
 
                         conn.execute(
@@ -1332,7 +1417,7 @@ def mpesa_callback():
                     """,
                     (
                         str(mpesa_receipt),
-                        payment_session["id"],
+                        payment_session["session_id"],
                         payment_session["student_id"],
                         payment_session["soma_hub_code"],
                         paid_amount,
@@ -1422,6 +1507,10 @@ def mpesa_callback():
                 print("Wallet balance:", wallet_balance)
                 print("------------------------------------------------------------")
                 print("============================================================")
+
+                # Separate transaction: the credit above stands
+                # even if this fails.
+                coins_bp.fulfil_payment_purpose(session_id)
 
                 return jsonify({
                     "ResultCode": 0,
@@ -1533,7 +1622,7 @@ def payment_status(session_id):
             )
             LIMIT 1
             """,
-            (payment_session["id"],),
+            (payment_session["session_id"],),
         ).fetchone()
 
         if (
@@ -1568,6 +1657,58 @@ def payment_status(session_id):
                 (session_id,),
             ).fetchone()
 
+        # ----------------------------------------------------
+        # Expire sessions the customer never completed.
+        # A late successful callback still credits the wallet,
+        # because the callback looks sessions up by request ID.
+        # ----------------------------------------------------
+
+        if (
+            payment_session["status"] == "pending"
+            and payment_session["expires_at"]
+            and payment_session["expires_at"] < now_string()
+        ):
+
+            conn.execute(
+                """
+                UPDATE payment_sessions
+                SET status = ?
+                WHERE session_id = ?
+                """,
+                ("expired", session_id),
+            )
+
+            conn.commit()
+
+            payment_session = conn.execute(
+                """
+                SELECT *
+                FROM payment_sessions
+                WHERE session_id = ?
+                LIMIT 1
+                """,
+                (session_id,),
+            ).fetchone()
+
+        # Retry the purpose if the callback credited the wallet
+        # but didn't get to finish it.
+        if (
+            payment_session["status"] == "completed"
+            and payment_session["purpose"]
+            and not payment_session["purpose_result"]
+        ):
+            coins_bp.fulfil_payment_purpose(session_id)
+
+            payment_session = conn.execute(
+                """
+                SELECT *
+                FROM payment_sessions
+                WHERE session_id = ?
+                LIMIT 1
+                """,
+                (session_id,),
+            ).fetchone()
+
         wallet_balance = calculate_wallet_balance(
             conn,
             soma_hub_code
@@ -1588,7 +1729,7 @@ def payment_status(session_id):
             ORDER BY id DESC
             LIMIT 1
             """,
-            (payment_session["id"],),
+            (payment_session["session_id"],),
         ).fetchone()
 
         return jsonify({
@@ -1605,6 +1746,8 @@ def payment_status(session_id):
             ],
             "created_at": payment_session["created_at"],
             "expires_at": payment_session["expires_at"],
+            "purpose": payment_session["purpose"],
+            "purpose_result": payment_session["purpose_result"],
             "completed_at": payment_session["completed_at"],
             "wallet_balance": wallet_balance,
             "transaction": (
@@ -1764,7 +1907,7 @@ def dev_test_payment(session_id):
             """,
             (
                 fake_receipt,
-                payment_session["id"],
+                payment_session["session_id"],
                 payment_session["student_id"],
                 payment_session["soma_hub_code"],
                 amount,
@@ -1835,7 +1978,10 @@ def dev_test_payment(session_id):
         print("Wallet balance:", balance)
         print("============================================")
 
+        purpose_result = coins_bp.fulfil_payment_purpose(session_id)
+
         return jsonify({
+            "purpose_result": purpose_result,
             "success": True,
             "message": "Development test payment completed",
             "session_id": session_id,
@@ -1974,7 +2120,25 @@ def legacy_stk_push():
 # RUN FLASK
 # ============================================================
 
+# ============================================================
+# COINS AND UNLOCKS
+# ============================================================
+
+coins_bp = create_coins_blueprint(
+    get_db=get_db,
+    now_string=now_string,
+    calculate_wallet_balance=calculate_wallet_balance,
+    is_sandbox=lambda: MPESA_ENVIRONMENT == "sandbox",
+)
+
+app.register_blueprint(coins_bp)
+
+
 if __name__ == "__main__":
+    # Creates any tables added since this database was made.
+    database.DATABASE_PATH = DB_PATH
+    database.init_database()
+
     print("")
     print("============================================================")
     print("                 SOMA HUB BACKEND")

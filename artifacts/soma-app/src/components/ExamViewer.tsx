@@ -4,6 +4,7 @@ import { getQuestionsForMaterial, type Question } from "@/data/questions";
 import { resolveGrade } from "@/data/grade";
 import { targetExamFor, performanceLevel, kcseGrade } from "@/data/assessment";
 import { useSomaStore } from "@/lib/storage";
+import { claimReward } from "@/lib/account";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -93,6 +94,7 @@ export function ExamViewer({ material, onClose }: Props) {
       total: TOTAL_MARKS,
       percentage,
     });
+    void claimReward({ materialId: material.id, type: "exam", percentage });
     setReward({ xpEarned: r.xpEarned, coinsEarned: r.coinsEarned, streak: r.streak.count });
     clearQuizProgress(material.id);
     setIsSubmitted(true);

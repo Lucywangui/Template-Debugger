@@ -1,3 +1,4 @@
+import { useSomaStore } from "@/lib/storage";
 import { Material } from "@/data/materials";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function MaterialCard({ material, isPurchased, onBuy, onOpen, onDelete }: Props) {
+  const materialCoins = useSomaStore((s) => s.prices.materialCoins);
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow border-2 group">
       <CardHeader className="pb-3 bg-muted/20 border-b">
@@ -66,7 +68,7 @@ export function MaterialCard({ material, isPurchased, onBuy, onOpen, onDelete }:
             onClick={onBuy}
             data-testid={`btn-buy-${material.id}`}
           >
-            OPEN · 🪙 5
+            OPEN · 🪙 {materialCoins}
           </Button>
         )}
       </CardFooter>
